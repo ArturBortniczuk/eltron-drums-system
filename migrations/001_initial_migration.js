@@ -1,37 +1,14 @@
-// migrations/001_initial_migration.js
+// migrations/001_initial_migration.js - ZAKTUALIZOWANA WERSJA
 const { sql } = require('@vercel/postgres');
 
-// Dla lokalnego testowania - dane przykładowe
-const sampleCompanies = [
-  { nip: '1234567890', name: 'Firma ABC Sp. z o.o.', email: 'kontakt@abc.pl', phone: '+48 123 456 789' },
-  { nip: '9876543210', name: 'XYZ Manufacturing', email: 'biuro@xyz.pl', phone: '+48 987 654 321' },
-  { nip: '5555666677', name: 'Przemysł Beta SA', email: 'info@beta.pl', phone: '+48 555 666 777' }
-];
-
-const sampleAdmins = [
-  {
-    nip: '0000000000',
-    username: 'admin',
-    name: 'Administrator Systemu',
-    email: 'admin@grupaeltron.pl',
-    role: 'admin',
-    permissions: { all: true }
-  },
-  {
-    nip: '1111111111',
-    username: 'supervisor',
-    name: 'Supervisor',
-    email: 'supervisor@grupaeltron.pl',
-    role: 'supervisor',
-    permissions: { view: true, edit: true }
-  }
-];
+// Import realnych danych - UWAGA: Będzie potrzebny w środowisku Node.js
+// Dla Vercel API możemy też przekazać dane jako parametr
 
 async function createTables() {
   console.log('Creating database tables...');
   
   try {
-    // Tabela companies (firmy)
+    // Tabela companies (firmy) - struktura zgodna z mockData.js
     await sql`
       CREATE TABLE IF NOT EXISTS companies (
         id SERIAL PRIMARY KEY,
@@ -46,7 +23,7 @@ async function createTables() {
       )
     `;
 
-    // Tabela drums (bębny)
+    // Tabela drums (bębny) - wszystkie kolumny z mockData.js
     await sql`
       CREATE TABLE IF NOT EXISTS drums (
         id SERIAL PRIMARY KEY,
@@ -55,6 +32,7 @@ async function createTables() {
         cecha TEXT,
         data_zwrotu_do_dostawcy DATE,
         kon_dostawca TEXT,
+        pelna_nazwa_kontrahenta TEXT,
         nip VARCHAR(10) REFERENCES companies(nip),
         typ_dok VARCHAR(50),
         nr_dokumentupz VARCHAR(100),
@@ -66,7 +44,7 @@ async function createTables() {
       )
     `;
 
-    // Tabela users (hasła użytkowników)
+    // Reszta tabel bez zmian
     await sql`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -78,7 +56,6 @@ async function createTables() {
       )
     `;
 
-    // Tabela return_requests (zgłoszenia zwrotów)
     await sql`
       CREATE TABLE IF NOT EXISTS return_requests (
         id SERIAL PRIMARY KEY,
@@ -100,7 +77,6 @@ async function createTables() {
       )
     `;
 
-    // Tabela custom_return_periods (niestandardowe terminy)
     await sql`
       CREATE TABLE IF NOT EXISTS custom_return_periods (
         id SERIAL PRIMARY KEY,
@@ -111,7 +87,6 @@ async function createTables() {
       )
     `;
 
-    // Tabela admin_users (administratorzy)
     await sql`
       CREATE TABLE IF NOT EXISTS admin_users (
         id SERIAL PRIMARY KEY,
@@ -136,86 +111,143 @@ async function createTables() {
   }
 }
 
-async function seedBasicData() {
-  console.log('Seeding basic data...');
+async function seedRealData(drumsData) {
+  console.log(`🚀 Starting import of ${drumsData.length} real drums...`);
   
   try {
-    // 1. Wstaw przykładowe firmy
-    console.log('Inserting sample companies...');
+    // 1. Wyciągnij unikalne firmy z danych o bębnach
+    console.log('📋 Extracting unique companies...');
     
-    for (const company of sampleCompanies) {
-      await sql`
-        INSERT INTO companies (nip, name, email, phone, address, status, last_activity)
-        VALUES (
-          ${company.nip},
-          ${company.name},
-          ${company.email},
-          ${company.phone},
-          'ul. Przykładowa 1, 00-000 Warszawa',
-          'Aktywny',
-          CURRENT_TIMESTAMP
-        )
-        ON CONFLICT (nip) DO UPDATE SET
-          name = EXCLUDED.name,
-          email = EXCLUDED.email,
-          phone = EXCLUDED.phone
-      `;
+    const companiesMap = new Map();
+    
+    drumsData.forEach(drum => {
+      if (!companiesMap.has(drum.NIP)) {
+        companiesMap.set(drum.NIP, {
+          nip: drum.NIP,
+          name: drum.PELNA_NAZWA_KONTRAHENTA,
+          // Domyślne dane - możesz je później zaktualizować
+          email: `kontakt@${drum.NIP}.pl`,
+          phone: '+48 000 000 000',
+          address: 'Adres do uzupełnienia'
+        });
+      }
+    });
+
+    const companies = Array.from(companiesMap.values());
+    console.log(`📊 Found ${companies.length} unique companies`);
+
+    // 2. Wstaw firmy
+    console.log('💾 Inserting companies...');
+    
+    let companiesInserted = 0;
+    for (const company of companies) {
+      try {
+        await sql`
+          INSERT INTO companies (nip, name, email, phone, address, status, last_activity)
+          VALUES (
+            ${company.nip},
+            ${company.name},
+            ${company.email},
+            ${company.phone},
+            ${company.address},
+            'Aktywny',
+            CURRENT_TIMESTAMP
+          )
+          ON CONFLICT (nip) DO UPDATE SET
+            name = EXCLUDED.name,
+            last_activity = CURRENT_TIMESTAMP
+        `;
+        companiesInserted++;
+        
+        if (companiesInserted % 10 === 0) {
+          console.log(`  📈 Inserted ${companiesInserted}/${companies.length} companies`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ Warning inserting company ${company.nip}:`, error.message);
+      }
     }
 
-    console.log(`✅ Inserted ${sampleCompanies.length} companies`);
+    console.log(`✅ Successfully inserted ${companiesInserted} companies`);
 
-    // 2. Wstaw przykładowe bębny
-    console.log('Inserting sample drums...');
+    // 3. Wstaw wszystkie bębny
+    console.log('🥁 Inserting drums...');
     
-    const sampleDrums = [
+    let drumsInserted = 0;
+    const batchSize = 50; // Wstawiaj w batches żeby nie przeciążyć
+    
+    for (let i = 0; i < drumsData.length; i += batchSize) {
+      const batch = drumsData.slice(i, i + batchSize);
+      
+      for (const drum of batch) {
+        try {
+          // Parsuj daty
+          const parseDate = (dateStr) => {
+            if (!dateStr || dateStr === ' ' || dateStr === '') return null;
+            const date = new Date(dateStr);
+            return isNaN(date) ? null : date.toISOString().split('T')[0];
+          };
+
+          await sql`
+            INSERT INTO drums (
+              kod_bebna, nazwa, cecha, data_zwrotu_do_dostawcy, 
+              kon_dostawca, pelna_nazwa_kontrahenta, nip, typ_dok, 
+              nr_dokumentupz, data_przyjecia_na_stan, kontrahent, 
+              status, data_wydania
+            ) VALUES (
+              ${drum.KOD_BEBNA || ''},
+              ${drum.NAZWA || ''},
+              ${drum.CECHA || ''},
+              ${parseDate(drum.DATA_ZWROTU_DO_DOSTAWCY)},
+              ${drum.KON_DOSTAWCA || ''},
+              ${drum.PELNA_NAZWA_KONTRAHENTA || ''},
+              ${drum.NIP || ''},
+              ${drum.TYP_DOK || ''},
+              ${drum.NR_DOKUMENTUPZ || ''},
+              ${parseDate(drum['Data przyjęcia na stan'])},
+              ${drum.KONTRAHENT || ''},
+              ${drum.STATUS || 'Aktywny'},
+              ${parseDate(drum.DATA_WYDANIA)}
+            )
+            ON CONFLICT (kod_bebna) DO UPDATE SET
+              nazwa = EXCLUDED.nazwa,
+              data_zwrotu_do_dostawcy = EXCLUDED.data_zwrotu_do_dostawcy,
+              status = EXCLUDED.status
+          `;
+          drumsInserted++;
+          
+        } catch (error) {
+          console.warn(`⚠️ Warning inserting drum ${drum.KOD_BEBNA}:`, error.message);
+        }
+      }
+      
+      console.log(`  🔄 Progress: ${Math.min(i + batchSize, drumsData.length)}/${drumsData.length} drums processed`);
+    }
+
+    console.log(`✅ Successfully inserted ${drumsInserted} drums`);
+
+    // 4. Dodaj administratorów
+    console.log('👥 Adding admin users...');
+    
+    const admins = [
       {
-        kod_bebna: 'BEB001',
-        nazwa: 'Bęben stalowy 200L',
-        nip: '1234567890',
-        data_zwrotu_do_dostawcy: '2024-06-15',
-        data_wydania: '2024-01-15'
+        nip: '0000000000',
+        username: 'admin',
+        name: 'Administrator Systemu',
+        email: 'admin@grupaeltron.pl',
+        role: 'admin',
+        permissions: { all: true }
       },
       {
-        kod_bebna: 'BEB002', 
-        nazwa: 'Bęben plastikowy 100L',
-        nip: '1234567890',
-        data_zwrotu_do_dostawcy: '2024-07-01',
-        data_wydania: '2024-02-01'
-      },
-      {
-        kod_bebna: 'BEB003',
-        nazwa: 'Bęben aluminiowy 150L',
-        nip: '9876543210',
-        data_zwrotu_do_dostawcy: '2024-05-30',
-        data_wydania: '2024-01-01'
+        nip: '1111111111',
+        username: 'supervisor',
+        name: 'Supervisor',
+        email: 'supervisor@grupaeltron.pl',
+        role: 'supervisor',
+        permissions: { view: true, edit: true, manage_clients: true }
       }
     ];
 
-    for (const drum of sampleDrums) {
-      await sql`
-        INSERT INTO drums (
-          kod_bebna, nazwa, nip, data_zwrotu_do_dostawcy, 
-          data_wydania, kon_dostawca, status
-        ) VALUES (
-          ${drum.kod_bebna},
-          ${drum.nazwa},
-          ${drum.nip},
-          ${drum.data_zwrotu_do_dostawcy},
-          ${drum.data_wydania},
-          'Dostawca XYZ',
-          'Aktywny'
-        )
-        ON CONFLICT (kod_bebna) DO UPDATE SET
-          nazwa = EXCLUDED.nazwa
-      `;
-    }
-
-    console.log(`✅ Inserted ${sampleDrums.length} drums`);
-
-    // 3. Wstaw administratorów
-    console.log('Inserting admin users...');
-    
-    for (const admin of sampleAdmins) {
+    for (const admin of admins) {
       await sql`
         INSERT INTO admin_users (nip, username, name, email, role, permissions, is_active)
         VALUES (
@@ -236,44 +268,51 @@ async function seedBasicData() {
       `;
     }
 
-    console.log(`✅ Inserted ${sampleAdmins.length} admin users`);
-    console.log('🎉 Basic data seeding completed successfully!');
-    
-  } catch (error) {
-    console.error('❌ Error seeding data:', error);
-    throw error;
-  }
-}
+    console.log('✅ Admin users added');
 
-// Funkcja główna migracji
-async function runMigration() {
-  console.log('🚀 Starting database migration...');
-  
-  try {
-    await createTables();
-    await seedBasicData();
-    console.log('✅ Migration completed successfully!');
-    console.log('');
-    console.log('📋 Test accounts created:');
-    console.log('🔑 Admin: NIP 0000000000 (set password on first login)');
-    console.log('🔑 Supervisor: NIP 1111111111 (set password on first login)');
-    console.log('👤 Client: NIP 1234567890 (set password on first login)');
-    console.log('👤 Client: NIP 9876543210 (set password on first login)');
+    console.log('🎉 REAL DATA IMPORT COMPLETED SUCCESSFULLY! 🎉');
+    console.log(`📊 Final stats:`);
+    console.log(`   • Companies: ${companiesInserted}`);
+    console.log(`   • Drums: ${drumsInserted}`);
+    console.log(`   • Admins: ${admins.length}`);
     
   } catch (error) {
-    console.error('❌ Migration failed:', error);
-    process.exit(1);
+    console.error('❌ Error seeding real data:', error);
+    throw error;
   }
 }
 
 // Export funkcji
 module.exports = {
   createTables,
-  seedBasicData,
-  runMigration
+  seedRealData,
+  runMigration: async (drumsData = null) => {
+    console.log('🚀 Starting REAL DATA migration...');
+    
+    if (!drumsData || drumsData.length === 0) {
+      throw new Error('❌ No drums data provided! Please pass mockDrumsData array.');
+    }
+    
+    try {
+      await createTables();
+      await seedRealData(drumsData);
+      console.log('✅ REAL DATA Migration completed successfully!');
+      
+      // Zwróć statystyki
+      const companiesCount = new Set(drumsData.map(d => d.NIP)).size;
+      
+      return {
+        success: true,
+        stats: {
+          totalDrums: drumsData.length,
+          uniqueCompanies: companiesCount,
+          adminAccounts: 2
+        }
+      };
+      
+    } catch (error) {
+      console.error('❌ Migration failed:', error);
+      throw error;
+    }
+  }
 };
-
-// Uruchom migrację jeśli plik jest wykonywany bezpośrednio
-if (require.main === module) {
-  runMigration();
-}
