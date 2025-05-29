@@ -12,6 +12,8 @@ import {
   BarChart3,
   Activity
 } from 'lucide-react';
+import { drumsAPI } from '../utils/api'; // ← Import na górze!
+
 const Dashboard = ({ user, onNavigate }) => {
   const [stats, setStats] = useState({
     totalDrums: 0,
@@ -20,67 +22,41 @@ const Dashboard = ({ user, onNavigate }) => {
     recentReturns: 0
   });
   const [recentActivity, setRecentActivity] = useState([]);
-
-import { drumsAPI } from '../utils/api';
+  const [userDrums, setUserDrums] = useState([]); // ← Dodaj ten state!
 
   useEffect(() => {
     const fetchDrums = async () => {
       try {
         const data = await drumsAPI.getDrums();
         setUserDrums(data);
+        
+        // Oblicz statystyki TUTAJ, po pobraniu danych
+        const now = new Date();
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        
+        const pendingReturns = data.filter(drum => {
+          const returnDate = new Date(drum.DATA_ZWROTU_DO_DOSTAWCY);
+          return returnDate <= now;
+        }).length;
+
+        const recentReturns = data.filter(drum => {
+          const acceptDate = new Date(drum['Data przyjęcia na stan']);
+          return acceptDate >= thirtyDaysAgo;
+        }).length;
+
+        setStats({
+          totalDrums: data.length,
+          activeDrums: data.filter(drum => drum.STATUS === 'Aktywny').length,
+          pendingReturns,
+          recentReturns
+        });
+        
       } catch (error) {
         console.error('Error fetching drums:', error);
       }
     };
-    fetchDrums();
-  }, []);
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     
-    const pendingReturns = userDrums.filter(drum => {
-      const returnDate = new Date(drum.DATA_ZWROTU_DO_DOSTAWCY);
-      return returnDate <= now;
-    }).length;
-
-    const recentReturns = userDrums.filter(drum => {
-      const acceptDate = new Date(drum['Data przyjęcia na stan']);
-      return acceptDate >= thirtyDaysAgo;
-    }).length;
-
-    setStats({
-      totalDrums: userDrums.length,
-      activeDrums: userDrums.filter(drum => drum.STATUS === 'Aktywny').length,
-      pendingReturns,
-      recentReturns
-    });
-
-    // Mockowa aktywność
-    setRecentActivity([
-      {
-        id: 1,
-        type: 'accepted',
-        message: 'Przyjęto nowy bęben BEB001',
-        time: '2 godziny temu',
-        icon: CheckCircle,
-        color: 'text-green-600'
-      },
-      {
-        id: 2,
-        type: 'pending',
-        message: 'Zbliża się termin zwrotu BEB002',
-        time: '1 dzień temu',
-        icon: Clock,
-        color: 'text-yellow-600'
-      },
-      {
-        id: 3,
-        type: 'alert',
-        message: 'Przekroczono termin zwrotu BEB003',
-        time: '3 dni temu',
-        icon: AlertCircle,
-        color: 'text-red-600'
-      }
-    ]);
+    fetchDrums();
   }, [user.nip]);
 
   const StatCard = ({ icon: Icon, title, value, subtitle, color, trend, onClick }) => (
