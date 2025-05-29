@@ -12,8 +12,6 @@ import {
   BarChart3,
   Activity
 } from 'lucide-react';
-import { mockDrumsData } from '../data/mockData';
-import { enrichDrumsWithCalculatedDates } from '../data/additionalData';
 const Dashboard = ({ user, onNavigate }) => {
   const [stats, setStats] = useState({
     totalDrums: 0,
@@ -23,9 +21,19 @@ const Dashboard = ({ user, onNavigate }) => {
   });
   const [recentActivity, setRecentActivity] = useState([]);
 
+import { drumsAPI } from '../utils/api';
+
   useEffect(() => {
-    // Oblicz statystyki dla użytkownika
-    const userDrums = mockDrumsData.filter(drum => drum.NIP === user.nip);
+    const fetchDrums = async () => {
+      try {
+        const data = await drumsAPI.getDrums();
+        setUserDrums(data);
+      } catch (error) {
+        console.error('Error fetching drums:', error);
+      }
+    };
+    fetchDrums();
+  }, []);
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     
