@@ -1,12 +1,33 @@
 // migrations/001_initial_migration.js
-import { sql } from '@vercel/postgres';
-import bcrypt from 'bcryptjs';
+const { sql } = require('@vercel/postgres');
 
-// Import danych z mockData
-import { mockDrumsData } from '../src/data/mockData.js';
-import { mockCompanies, mockReturnRequests, mockAdmins, mockCustomReturnPeriods } from '../src/data/additionalData.js';
+// Dla lokalnego testowania - dane przykładowe
+const sampleCompanies = [
+  { nip: '1234567890', name: 'Firma ABC Sp. z o.o.', email: 'kontakt@abc.pl', phone: '+48 123 456 789' },
+  { nip: '9876543210', name: 'XYZ Manufacturing', email: 'biuro@xyz.pl', phone: '+48 987 654 321' },
+  { nip: '5555666677', name: 'Przemysł Beta SA', email: 'info@beta.pl', phone: '+48 555 666 777' }
+];
 
-export async function createTables() {
+const sampleAdmins = [
+  {
+    nip: '0000000000',
+    username: 'admin',
+    name: 'Administrator Systemu',
+    email: 'admin@grupaeltron.pl',
+    role: 'admin',
+    permissions: { all: true }
+  },
+  {
+    nip: '1111111111',
+    username: 'supervisor',
+    name: 'Supervisor',
+    email: 'supervisor@grupaeltron.pl',
+    role: 'supervisor',
+    permissions: { view: true, edit: true }
+  }
+];
+
+async function createTables() {
   console.log('Creating database tables...');
   
   try {
@@ -115,119 +136,86 @@ export async function createTables() {
   }
 }
 
-export async function seedData() {
-  console.log('Seeding database with mock data...');
+async function seedBasicData() {
+  console.log('Seeding basic data...');
   
   try {
-    // 1. Wstaw firmy (companies)
-    console.log('Inserting companies...');
+    // 1. Wstaw przykładowe firmy
+    console.log('Inserting sample companies...');
     
-    // Wyciągnij unikalne firmy z mockDrumsData
-    const uniqueCompanies = new Map();
-    
-    mockDrumsData.forEach(drum => {
-      if (!uniqueCompanies.has(drum.NIP)) {
-        uniqueCompanies.set(drum.NIP, {
-          nip: drum.NIP,
-          name: drum.PELNA_NAZWA_KONTRAHENTA || drum.KONTRAHENT || 'Nieznana firma'
-        });
-      }
-    });
-
-    // Dodaj firmy z mockCompanies (jeśli istnieją)
-    if (mockCompanies) {
-      mockCompanies.forEach(company => {
-        uniqueCompanies.set(company.nip, {
-          nip: company.nip,
-          name: company.name,
-          email: company.email,
-          phone: company.phone,
-          address: company.address,
-          status: company.status || 'Aktywny'
-        });
-      });
-    }
-
-    // Wstaw firmy do bazy
-    for (const [nip, company] of uniqueCompanies) {
+    for (const company of sampleCompanies) {
       await sql`
         INSERT INTO companies (nip, name, email, phone, address, status, last_activity)
         VALUES (
           ${company.nip},
           ${company.name},
-          ${company.email || null},
-          ${company.phone || null},
-          ${company.address || null},
-          ${company.status || 'Aktywny'},
+          ${company.email},
+          ${company.phone},
+          'ul. Przykładowa 1, 00-000 Warszawa',
+          'Aktywny',
           CURRENT_TIMESTAMP
         )
         ON CONFLICT (nip) DO UPDATE SET
           name = EXCLUDED.name,
-          email = COALESCE(EXCLUDED.email, companies.email),
-          phone = COALESCE(EXCLUDED.phone, companies.phone),
-          address = COALESCE(EXCLUDED.address, companies.address)
+          email = EXCLUDED.email,
+          phone = EXCLUDED.phone
       `;
     }
 
-    console.log(`✅ Inserted ${uniqueCompanies.size} companies`);
+    console.log(`✅ Inserted ${sampleCompanies.length} companies`);
 
-    // 2. Wstaw bębny (drums)
-    console.log('Inserting drums...');
+    // 2. Wstaw przykładowe bębny
+    console.log('Inserting sample drums...');
     
-    for (const drum of mockDrumsData) {
+    const sampleDrums = [
+      {
+        kod_bebna: 'BEB001',
+        nazwa: 'Bęben stalowy 200L',
+        nip: '1234567890',
+        data_zwrotu_do_dostawcy: '2024-06-15',
+        data_wydania: '2024-01-15'
+      },
+      {
+        kod_bebna: 'BEB002', 
+        nazwa: 'Bęben plastikowy 100L',
+        nip: '1234567890',
+        data_zwrotu_do_dostawcy: '2024-07-01',
+        data_wydania: '2024-02-01'
+      },
+      {
+        kod_bebna: 'BEB003',
+        nazwa: 'Bęben aluminiowy 150L',
+        nip: '9876543210',
+        data_zwrotu_do_dostawcy: '2024-05-30',
+        data_wydania: '2024-01-01'
+      }
+    ];
+
+    for (const drum of sampleDrums) {
       await sql`
         INSERT INTO drums (
-          kod_bebna, nazwa, cecha, data_zwrotu_do_dostawcy, kon_dostawca,
-          nip, typ_dok, nr_dokumentupz, data_przyjecia_na_stan,
-          kontrahent, status, data_wydania
+          kod_bebna, nazwa, nip, data_zwrotu_do_dostawcy, 
+          data_wydania, kon_dostawca, status
         ) VALUES (
-          ${drum.KOD_BEBNA},
-          ${drum.NAZWA},
-          ${drum.CECHA || null},
-          ${drum.DATA_ZWROTU_DO_DOSTAWCY},
-          ${drum.KON_DOSTAWCA || null},
-          ${drum.NIP},
-          ${drum.TYP_DOK || null},
-          ${drum.NR_DOKUMENTUPZ || null},
-          ${drum['Data przyjęcia na stan'] || null},
-          ${drum.KONTRAHENT || null},
-          ${drum.STATUS || 'Aktywny'},
-          ${drum.DATA_WYDANIA || null}
+          ${drum.kod_bebna},
+          ${drum.nazwa},
+          ${drum.nip},
+          ${drum.data_zwrotu_do_dostawcy},
+          ${drum.data_wydania},
+          'Dostawca XYZ',
+          'Aktywny'
         )
         ON CONFLICT (kod_bebna) DO UPDATE SET
-          nazwa = EXCLUDED.nazwa,
-          cecha = EXCLUDED.cecha,
-          data_zwrotu_do_dostawcy = EXCLUDED.data_zwrotu_do_dostawcy
+          nazwa = EXCLUDED.nazwa
       `;
     }
 
-    console.log(`✅ Inserted ${mockDrumsData.length} drums`);
+    console.log(`✅ Inserted ${sampleDrums.length} drums`);
 
     // 3. Wstaw administratorów
     console.log('Inserting admin users...');
     
-    const defaultAdmins = mockAdmins || [
-      {
-        id: 1,
-        nip: '0000000000',
-        username: 'admin',
-        name: 'Administrator Systemu',
-        email: 'admin@grupaeltron.pl',
-        role: 'admin',
-        permissions: { all: true }
-      },
-      {
-        id: 2,
-        nip: '1111111111',
-        username: 'supervisor',
-        name: 'Supervisor',
-        email: 'supervisor@grupaeltron.pl',
-        role: 'supervisor',
-        permissions: { view: true, edit: true }
-      }
-    ];
-
-    for (const admin of defaultAdmins) {
+    for (const admin of sampleAdmins) {
       await sql`
         INSERT INTO admin_users (nip, username, name, email, role, permissions, is_active)
         VALUES (
@@ -248,58 +236,8 @@ export async function seedData() {
       `;
     }
 
-    console.log(`✅ Inserted ${defaultAdmins.length} admin users`);
-
-    // 4. Wstaw niestandardowe terminy zwrotu (jeśli istnieją)
-    if (mockCustomReturnPeriods && mockCustomReturnPeriods.length > 0) {
-      console.log('Inserting custom return periods...');
-      
-      for (const period of mockCustomReturnPeriods) {
-        await sql`
-          INSERT INTO custom_return_periods (nip, return_period_days)
-          VALUES (${period.nip}, ${period.returnPeriodDays})
-          ON CONFLICT (nip) DO UPDATE SET
-            return_period_days = EXCLUDED.return_period_days,
-            updated_at = CURRENT_TIMESTAMP
-        `;
-      }
-
-      console.log(`✅ Inserted ${mockCustomReturnPeriods.length} custom return periods`);
-    }
-
-    // 5. Wstaw przykładowe zgłoszenia zwrotów (jeśli istnieją)
-    if (mockReturnRequests && mockReturnRequests.length > 0) {
-      console.log('Inserting return requests...');
-      
-      for (const request of mockReturnRequests) {
-        await sql`
-          INSERT INTO return_requests (
-            user_nip, company_name, street, postal_code, city,
-            email, loading_hours, available_equipment, notes,
-            collection_date, selected_drums, status, priority
-          ) VALUES (
-            ${request.user_nip},
-            ${request.company_name},
-            ${request.street || 'ul. Przykładowa 1'},
-            ${request.postal_code || '00-000'},
-            ${request.city || 'Warszawa'},
-            ${request.email},
-            ${request.loading_hours || '8:00-16:00'},
-            ${request.available_equipment || null},
-            ${request.notes || null},
-            ${request.collection_date},
-            ${JSON.stringify(request.selected_drums)},
-            ${request.status || 'Pending'},
-            ${request.priority || 'Normal'}
-          )
-          ON CONFLICT DO NOTHING
-        `;
-      }
-
-      console.log(`✅ Inserted ${mockReturnRequests.length} return requests`);
-    }
-
-    console.log('🎉 Database seeding completed successfully!');
+    console.log(`✅ Inserted ${sampleAdmins.length} admin users`);
+    console.log('🎉 Basic data seeding completed successfully!');
     
   } catch (error) {
     console.error('❌ Error seeding data:', error);
@@ -308,20 +246,34 @@ export async function seedData() {
 }
 
 // Funkcja główna migracji
-export async function runMigration() {
+async function runMigration() {
   console.log('🚀 Starting database migration...');
   
   try {
     await createTables();
-    await seedData();
+    await seedBasicData();
     console.log('✅ Migration completed successfully!');
+    console.log('');
+    console.log('📋 Test accounts created:');
+    console.log('🔑 Admin: NIP 0000000000 (set password on first login)');
+    console.log('🔑 Supervisor: NIP 1111111111 (set password on first login)');
+    console.log('👤 Client: NIP 1234567890 (set password on first login)');
+    console.log('👤 Client: NIP 9876543210 (set password on first login)');
+    
   } catch (error) {
     console.error('❌ Migration failed:', error);
     process.exit(1);
   }
 }
 
+// Export funkcji
+module.exports = {
+  createTables,
+  seedBasicData,
+  runMigration
+};
+
 // Uruchom migrację jeśli plik jest wykonywany bezpośrednio
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (require.main === module) {
   runMigration();
 }

@@ -1,9 +1,18 @@
 // api/auth/login.js
-import { sql } from '@vercel/postgres';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+const { sql } = require('@vercel/postgres');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
+  // Ustaw CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -135,4 +144,4 @@ export default async function handler(req, res) {
     console.error('Login error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
-}
+};

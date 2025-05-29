@@ -1,6 +1,6 @@
 // api/returns/index.js
-import { sql } from '@vercel/postgres';
-import jwt from 'jsonwebtoken';
+const { sql } = require('@vercel/postgres');
+const jwt = require('jsonwebtoken');
 
 // Middleware do autoryzacji
 const authenticateToken = (req) => {
@@ -19,7 +19,16 @@ const authenticateToken = (req) => {
   }
 };
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   try {
     const user = authenticateToken(req);
 
@@ -41,21 +50,25 @@ export default async function handler(req, res) {
         // Administratorzy widzą wszystkie zgłoszenia
         const { nip } = req.query;
         
-        const { rows } = nip 
-          ? await sql`
-              SELECT rr.*, c.name as company_name
-              FROM return_requests rr
-              JOIN companies c ON rr.user_nip = c.nip
-              WHERE rr.user_nip = ${nip}
-              ORDER BY rr.created_at DESC
-            `
-          : await sql`
-              SELECT rr.*, c.name as company_name
-              FROM return_requests rr
-              JOIN companies c ON rr.user_nip = c.nip
-              ORDER BY rr.created_at DESC
-            `;
+        let queryResult;
+        if (nip) {
+          queryResult = await sql`
+            SELECT rr.*, c.name as company_name
+            FROM return_requests rr
+            JOIN companies c ON rr.user_nip = c.nip
+            WHERE rr.user_nip = ${nip}
+            ORDER BY rr.created_at DESC
+          `;
+        } else {
+          queryResult = await sql`
+            SELECT rr.*, c.name as company_name
+            FROM return_requests rr
+            JOIN companies c ON rr.user_nip = c.nip
+            ORDER BY rr.created_at DESC
+          `;
+        }
 
+        const { rows } = queryResult;
         return res.status(200).json(rows);
       }
 
@@ -84,7 +97,9 @@ export default async function handler(req, res) {
       }
 
       // Sprawdź czy wszystkie wybrane bębny należą do użytkownika
-      const drumCodes = selectedDrums.map(code => `'${code}'`).join(',');
+      const drumCodes = selectedDrums;
+      const placeholders = drumCodes.map(() => '?').join(',');
+      
       const { rows: drumCheck } = await sql`
         SELECT kod_bebna FROM drums 
         WHERE nip = ${user.nip} AND kod_bebna = ANY(${selectedDrums})
@@ -199,4 +214,4 @@ export default async function handler(req, res) {
     
     return res.status(500).json({ error: 'Internal server error' });
   }
-}
+};

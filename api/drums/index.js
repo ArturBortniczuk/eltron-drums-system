@@ -1,6 +1,6 @@
 // api/drums/index.js
-import { sql } from '@vercel/postgres';
-import jwt from 'jsonwebtoken';
+const { sql } = require('@vercel/postgres');
+const jwt = require('jsonwebtoken');
 
 // Middleware do autoryzacji
 const authenticateToken = (req) => {
@@ -19,7 +19,16 @@ const authenticateToken = (req) => {
   }
 };
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   try {
     const user = authenticateToken(req);
 
@@ -110,8 +119,10 @@ export default async function handler(req, res) {
 
       } else if (user.role === 'admin' || user.role === 'supervisor') {
         // Administratorzy widzą wszystkie bębny lub filtrowane po NIP
-        let query = `
-          SELECT 
+        let queryResult;
+
+        if (nip) {
+          queryResult = await sql`SELECT 
             d.*,
             c.name as company_name,
             c.email as company_email,
@@ -121,39 +132,23 @@ export default async function handler(req, res) {
           FROM drums d
           JOIN companies c ON d.nip = c.nip
           LEFT JOIN custom_return_periods crp ON d.nip = crp.nip
-        `;
-
-        const params = [];
-        if (nip) {
-          query += ' WHERE d.nip = $1';
-          params.push(nip);
+          WHERE d.nip = ${nip}
+          ORDER BY d.kod_bebna ASC`;
+        } else {
+          queryResult = await sql`SELECT 
+            d.*,
+            c.name as company_name,
+            c.email as company_email,
+            c.phone as company_phone,
+            c.address as company_address,
+            crp.return_period_days
+          FROM drums d
+          JOIN companies c ON d.nip = c.nip
+          LEFT JOIN custom_return_periods crp ON d.nip = crp.nip
+          ORDER BY d.kod_bebna ASC`;
         }
-        query += ' ORDER BY d.kod_bebna ASC';
 
-        const { rows } = nip 
-          ? await sql`SELECT 
-              d.*,
-              c.name as company_name,
-              c.email as company_email,
-              c.phone as company_phone,
-              c.address as company_address,
-              crp.return_period_days
-            FROM drums d
-            JOIN companies c ON d.nip = c.nip
-            LEFT JOIN custom_return_periods crp ON d.nip = crp.nip
-            WHERE d.nip = ${nip}
-            ORDER BY d.kod_bebna ASC`
-          : await sql`SELECT 
-              d.*,
-              c.name as company_name,
-              c.email as company_email,
-              c.phone as company_phone,
-              c.address as company_address,
-              crp.return_period_days
-            FROM drums d
-            JOIN companies c ON d.nip = c.nip
-            LEFT JOIN custom_return_periods crp ON d.nip = crp.nip
-            ORDER BY d.kod_bebna ASC`;
+        const { rows } = queryResult;
 
         // Wzbogać dane podobnie jak dla klienta
         const enrichedDrums = rows.map(drum => {
@@ -237,4 +232,4 @@ export default async function handler(req, res) {
     
     return res.status(500).json({ error: 'Internal server error' });
   }
-}
+};
