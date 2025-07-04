@@ -1,0 +1,12 @@
+{
+  "extends": [
+    "react-app",
+    "react-app/jest"
+  ],
+  "rules": {
+    "import/first": "off",
+    "import/order": "off",
+    "no-unused-vars": "warn",
+    "react-hooks/exhaustive-deps": "warn"
+  }
+}
