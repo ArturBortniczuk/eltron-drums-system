@@ -1,23 +1,9 @@
-// src/utils/api.js - ZOPTYMALIZOWANA WERSJA
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || '';
-const USE_MOCK_DATA = process.env.REACT_APP_USE_MOCK_DATA === 'false' || !API_BASE_URL;
-
-// Import mock data jako fallback
+// src/utils/api.js - NAPRAWIONA WERSJA (WSZYSTKIE IMPORTY NA GÓRZE)
 import { mockDrumsData } from '../data/mockData';
 import { mockCompanies, mockReturnRequests } from '../data/additionalData';
 
-// Helper function to get auth token
-const getAuthToken = () => {
-  return localStorage.getItem('authToken');
-};
-
-// Helper function to check if user is logged in
-const isAuthenticated = () => {
-  const token = getAuthToken();
-  const user = localStorage.getItem('currentUser');
-  return !!(token && user);
-};
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
+const USE_MOCK_DATA = process.env.REACT_APP_USE_MOCK_DATA === 'true' || !API_BASE_URL;
 
 // Connection helpers
 export const connectionHelpers = {
@@ -38,6 +24,51 @@ export const connectionHelpers = {
       return false;
     }
   }
+};
+
+// Helper function to get auth token
+const getAuthToken = () => {
+  return localStorage.getItem('authToken');
+};
+
+// Helper function to check if user is logged in
+const isAuthenticated = () => {
+  const token = getAuthToken();
+  const user = localStorage.getItem('currentUser');
+  return !!(token && user);
+};
+
+// Mock request handler
+const handleMockRequest = async (url, options = {}) => {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 700));
+  
+  const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  
+  // Handle different endpoints
+  if (url.includes('/api/drums')) {
+    if (user.role === 'admin' || user.role === 'supervisor') {
+      return mockDrumsData; // Admin sees all drums
+    } else {
+      // Client sees only their drums
+      return mockDrumsData.filter(drum => drum.NIP === user.nip);
+    }
+  }
+  
+  if (url.includes('/api/companies')) {
+    return mockCompanies;
+  }
+  
+  if (url.includes('/api/returns')) {
+    if (user.role === 'admin' || user.role === 'supervisor') {
+      return mockReturnRequests;
+    } else {
+      return mockReturnRequests.filter(req => req.user_nip === user.nip);
+    }
+  }
+  
+  // Default empty response
+  return [];
 };
 
 // Helper function to make authenticated requests
@@ -80,111 +111,54 @@ const makeRequest = async (url, options = {}) => {
   }
 };
 
-// Mock request handler
-const handleMockRequest = async (url, options = {}) => {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 700));
-  
-  const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-  
-  // Handle different endpoints
-  if (url.includes('/api/drums')) {
-    if (user.role === 'admin' || user.role === 'supervisor') {
-      return mockDrumsData; // Admin sees all drums
-    } else {
-      // Client sees only their drums
-      return mockDrumsData.filter(drum => drum.NIP === user.nip);
-    }
-  }
-  
-  if (url.includes('/api/companies')) {
-    if (user.role === 'admin' || user.role === 'supervisor') {
-      return mockCompanies;
-    } else {
-      return mockCompanies.filter(company => company.nip === user.nip);
-    }
-  }
-  
-  if (url.includes('/api/returns')) {
-    if (user.role === 'admin' || user.role === 'supervisor') {
-      return mockReturnRequests;
-    } else {
-      return mockReturnRequests.filter(request => request.user_nip === user.nip);
-    }
-  }
-  
-  if (url.includes('/api/auth/login')) {
-    // Mock login response
-    const { nip, password, loginMode } = JSON.parse(options.body || '{}');
-    
-    if (loginMode === 'admin') {
-      // Simple mock admin check
-      if ((nip === '0000000000' || nip === '1111111111') && password) {
-        const mockToken = 'mock-admin-token-' + Date.now();
-        return {
-          token: mockToken,
-          user: {
-            id: 1,
-            nip: nip,
-            username: nip === '0000000000' ? 'admin' : 'supervisor',
-            name: nip === '0000000000' ? 'Administrator Systemu' : 'Supervisor',
-            email: `${nip === '0000000000' ? 'admin' : 'supervisor'}@grupaeltron.pl`,
-            role: nip === '0000000000' ? 'admin' : 'supervisor',
-            companyName: 'Grupa Eltron - Administrator'
-          }
-        };
-      }
-    } else {
-      // Client login
-      const userData = mockDrumsData.find(item => item.NIP === nip);
-      if (userData && password) {
-        const mockToken = 'mock-client-token-' + Date.now();
-        return {
-          token: mockToken,
-          user: {
-            nip: nip,
-            companyName: userData.PELNA_NAZWA_KONTRAHENTA,
-            role: 'client'
-          }
-        };
-      }
-    }
-    
-    throw new Error('Invalid credentials');
-  }
-  
-  // Default response
-  return { success: true, data: [] };
-};
-
 // Auth API
 export const authAPI = {
-  async login(nip, password, loginMode = 'client') {
-    const response = await makeRequest('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ nip, password, loginMode }),
-    });
-
-    if (response.token) {
-      localStorage.setItem('authToken', response.token);
-      localStorage.setItem('currentUser', JSON.stringify(response.user));
+  async login(nip, password, role = 'client') {
+    if (USE_MOCK_DATA) {
+      // Mock login logic
+      const mockUser = {
+        nip,
+        role,
+        companyName: `Firma ${nip.slice(-3)}`,
+        fullName: `FIRMA ${nip.slice(-3)} SP. Z O.O.`
+      };
+      
+      localStorage.setItem('authToken', 'mock-token-' + Date.now());
+      localStorage.setItem('currentUser', JSON.stringify(mockUser));
+      
+      return { success: true, user: mockUser };
     }
     
-    return response;
+    return makeRequest('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ nip, password, role }),
+    });
   },
 
-  async register(nip, password, confirmPassword, loginMode = 'client') {
-    const response = await makeRequest('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ nip, password, confirmPassword, loginMode }),
-    });
-
-    if (response.token) {
-      localStorage.setItem('authToken', response.token);
-      localStorage.setItem('currentUser', JSON.stringify(response.user));
+  async checkNip(nip, role = 'client') {
+    if (USE_MOCK_DATA) {
+      return { 
+        exists: nip.length >= 8, 
+        isFirstLogin: Math.random() > 0.5,
+        companyName: `Firma ${nip.slice(-3)}`
+      };
     }
     
-    return response;
+    return makeRequest('/api/auth/check-nip', {
+      method: 'POST',
+      body: JSON.stringify({ nip, role }),
+    });
+  },
+
+  async setPassword(nip, password, role = 'client') {
+    if (USE_MOCK_DATA) {
+      return { success: true };
+    }
+    
+    return makeRequest('/api/auth/set-password', {
+      method: 'POST',
+      body: JSON.stringify({ nip, password, role }),
+    });
   },
 
   logout() {
