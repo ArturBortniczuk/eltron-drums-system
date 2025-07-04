@@ -1,7 +1,7 @@
 // src/utils/api.js - ZOPTYMALIZOWANA WERSJA
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '';
-const USE_MOCK_DATA = process.env.REACT_APP_USE_MOCK_DATA === 'true' || !API_BASE_URL;
+const USE_MOCK_DATA = process.env.REACT_APP_USE_MOCK_DATA === 'false' || !API_BASE_URL;
 
 // Import mock data jako fallback
 import { mockDrumsData } from '../data/mockData';
