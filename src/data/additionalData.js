@@ -47,17 +47,7 @@ const convertPolishDateToISO = (polishDate) => {
 
 // Funkcja pomocnicza do obliczania terminu zwrotu
 export const calculateReturnDate = (issueDate, clientNip) => {
-  if (!issueDate || issueDate === ' ') {
-    // Jeśli brak daty wydania, użyj domyślnego terminu (85 dni od dzisiaj)
-    const customPeriod = mockCustomReturnPeriods.find(period => period.nip === clientNip);
-    const periodDays = customPeriod ? customPeriod.returnPeriodDays : 85;
-    
-    const today = new Date();
-    const returnDate = new Date(today);
-    returnDate.setDate(returnDate.getDate() + periodDays);
-    
-    return returnDate.toISOString().split('T')[0];
-  }
+  if (!issueDate || issueDate === ' ') return null;
   
   const customPeriod = mockCustomReturnPeriods.find(period => period.nip === clientNip);
   const periodDays = customPeriod ? customPeriod.returnPeriodDays : 85; // domyślnie 85 dni
