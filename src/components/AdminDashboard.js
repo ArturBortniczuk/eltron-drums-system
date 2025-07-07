@@ -35,113 +35,111 @@ const AdminDashboard = ({ onNavigate }) => {
   const [urgentItems, setUrgentItems] = useState([]);
 
   useEffect(() => {
+    const calculateStats = () => {
+      const now = new Date();
+      const totalClients = mockCompanies.length;
+      const totalDrums = mockDrumsData.length;
+      
+      const pendingReturns = mockReturnRequests.filter(req => req.status === 'Pending').length;
+      const overdueReturns = mockDrumsData.filter(drum => {
+        const returnDate = new Date(drum.DATA_ZWROTU_DO_DOSTAWCY);
+        return returnDate < now;
+      }).length;
+
+      const activeRequests = mockReturnRequests.filter(req => 
+        req.status === 'Pending' || req.status === 'Approved'
+      ).length;
+      
+      const completedRequests = mockReturnRequests.filter(req => req.status === 'Completed').length;
+
+      setStats({
+        totalClients,
+        totalDrums,
+        pendingReturns,
+        overdueReturns,
+        activeRequests,
+        completedRequests
+      });
+    };
+
+    const generateRecentActivity = () => {
+      const activities = [
+        {
+          id: 1,
+          type: 'new_request',
+          message: 'Nowe zgłoszenie zwrotu od Firma ABC',
+          time: '30 minut temu',
+          icon: Truck,
+          color: 'text-blue-600',
+          priority: 'normal'
+        },
+        {
+          id: 2,
+          type: 'overdue',
+          message: 'BEB009 - przekroczony termin zwrotu',
+          time: '2 godziny temu',
+          icon: AlertTriangle,
+          color: 'text-red-600',
+          priority: 'high'
+        },
+        {
+          id: 3,
+          type: 'completed',
+          message: 'Zakończono zwrot dla XYZ S.A.',
+          time: '4 godziny temu',
+          icon: CheckCircle,
+          color: 'text-green-600',
+          priority: 'normal'
+        },
+        {
+          id: 4,
+          type: 'new_client',
+          message: 'Nowy klient: Fabryka Farb Gamma',
+          time: '1 dzień temu',
+          icon: Users,
+          color: 'text-purple-600',
+          priority: 'normal'
+        }
+      ];
+      setRecentActivity(activities);
+    };
+    
+    const findUrgentItems = () => {
+      const now = new Date();
+      const urgent = [];
+
+      mockDrumsData.forEach(drum => {
+        const returnDate = new Date(drum.DATA_ZWROTU_DO_DOSTAWCY);
+        if (returnDate < now) {
+          urgent.push({
+            type: 'overdue_drum',
+            title: `Przekroczony termin: ${drum.KOD_BEBNA}`,
+            subtitle: drum.PELNA_NAZWA_KONTRAHENTA,
+            priority: 'high',
+            action: () => onNavigate('admin-drums')
+          });
+        }
+      });
+
+      mockReturnRequests.forEach(request => {
+        if (request.priority === 'High' && request.status === 'Pending') {
+          urgent.push({
+            type: 'urgent_request',
+            title: `Pilne zgłoszenie #${request.id}`,
+            subtitle: request.company_name,
+            priority: 'high',
+            action: () => onNavigate('admin-returns')
+          });
+        }
+      });
+
+      setUrgentItems(urgent.slice(0, 5));
+    };
+
     calculateStats();
     generateRecentActivity();
     findUrgentItems();
-  }, []);
-
-  const calculateStats = () => {
-    const now = new Date();
-    const totalClients = mockCompanies.length;
-    const totalDrums = mockDrumsData.length;
-    
-    const pendingReturns = mockReturnRequests.filter(req => req.status === 'Pending').length;
-    const overdueReturns = mockDrumsData.filter(drum => {
-      const returnDate = new Date(drum.DATA_ZWROTU_DO_DOSTAWCY);
-      return returnDate < now;
-    }).length;
-
-    const activeRequests = mockReturnRequests.filter(req => 
-      req.status === 'Pending' || req.status === 'Approved'
-    ).length;
-    
-    const completedRequests = mockReturnRequests.filter(req => req.status === 'Completed').length;
-
-    setStats({
-      totalClients,
-      totalDrums,
-      pendingReturns,
-      overdueReturns,
-      activeRequests,
-      completedRequests
-    });
-  };
-
-  const generateRecentActivity = () => {
-    const activities = [
-      {
-        id: 1,
-        type: 'new_request',
-        message: 'Nowe zgłoszenie zwrotu od Firma ABC',
-        time: '30 minut temu',
-        icon: Truck,
-        color: 'text-blue-600',
-        priority: 'normal'
-      },
-      {
-        id: 2,
-        type: 'overdue',
-        message: 'BEB009 - przekroczony termin zwrotu',
-        time: '2 godziny temu',
-        icon: AlertTriangle,
-        color: 'text-red-600',
-        priority: 'high'
-      },
-      {
-        id: 3,
-        type: 'completed',
-        message: 'Zakończono zwrot dla XYZ S.A.',
-        time: '4 godziny temu',
-        icon: CheckCircle,
-        color: 'text-green-600',
-        priority: 'normal'
-      },
-      {
-        id: 4,
-        type: 'new_client',
-        message: 'Nowy klient: Fabryka Farb Gamma',
-        time: '1 dzień temu',
-        icon: Users,
-        color: 'text-purple-600',
-        priority: 'normal'
-      }
-    ];
-    setRecentActivity(activities);
-  };
-
-  const findUrgentItems = () => {
-    const now = new Date();
-    const urgent = [];
-
-    // Sprawdź przekroczone terminy
-    mockDrumsData.forEach(drum => {
-      const returnDate = new Date(drum.DATA_ZWROTU_DO_DOSTAWCY);
-      if (returnDate < now) {
-        urgent.push({
-          type: 'overdue_drum',
-          title: `Przekroczony termin: ${drum.KOD_BEBNA}`,
-          subtitle: drum.PELNA_NAZWA_KONTRAHENTA,
-          priority: 'high',
-          action: () => onNavigate('admin-drums')
-        });
-      }
-    });
-
-    // Sprawdź pilne zgłoszenia
-    mockReturnRequests.forEach(request => {
-      if (request.priority === 'High' && request.status === 'Pending') {
-        urgent.push({
-          type: 'urgent_request',
-          title: `Pilne zgłoszenie #${request.id}`,
-          subtitle: request.company_name,
-          priority: 'high',
-          action: () => onNavigate('admin-returns')
-        });
-      }
-    });
-
-    setUrgentItems(urgent.slice(0, 5));
-  };
+  }, [onNavigate]);
 
   const StatCard = ({ icon: Icon, title, value, subtitle, color, trend, percentage, onClick }) => (
     <div 
@@ -195,108 +193,107 @@ const AdminDashboard = ({ onNavigate }) => {
   };
 
   return (
-    <div className="min-h-screen pt-6 lg:ml-80 transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-              <BarChart3 className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-800 bg-clip-text text-transparent">
-                Panel Administratora
-              </h1>
-              <p className="text-gray-600">Zarządzaj systemem i monitoruj aktywność</p>
-            </div>
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center space-x-4 mb-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+            <BarChart3 className="w-6 h-6 text-white" />
           </div>
-          
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <Calendar className="w-4 h-4" />
-            <span>Ostatnia aktualizacja: {new Date().toLocaleDateString('pl-PL', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}</span>
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-800 bg-clip-text text-transparent">
+              Panel Administratora
+            </h1>
+            <p className="text-gray-600">Zarządzaj systemem i monitoruj aktywność</p>
           </div>
         </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
-          <StatCard
-            icon={Users}
-            title="Wszyscy klienci"
-            value={stats.totalClients}
-            subtitle="Aktywne firmy"
-            color="text-blue-600"
-            trend={1}
-            percentage={8}
-            onClick={() => onNavigate('admin-clients')}
-          />
-          
-          <StatCard
-            icon={Package}
-            title="Wszystkie bębny"
-            value={stats.totalDrums}
-            subtitle="W systemie"
-            color="text-green-600"
-            trend={1}
-            percentage={12}
-            onClick={() => onNavigate('admin-drums')}
-          />
-          
-          <StatCard
-            icon={Clock}
-            title="Oczekujące zwroty"
-            value={stats.pendingReturns}
-            subtitle="Do zatwierdzenia"
-            color="text-yellow-600"
-            trend={-1}
-            percentage={5}
-            onClick={() => onNavigate('admin-returns')}
-          />
-          
-          <StatCard
-            icon={AlertTriangle}
-            title="Przekroczenia"
-            value={stats.overdueReturns}
-            subtitle="Przeterminowane"
-            color="text-red-600"
-            trend={-1}
-            percentage={15}
-            onClick={() => onNavigate('admin-drums')}
-          />
-          
-          <StatCard
-            icon={Truck}
-            title="Aktywne zgłoszenia"
-            value={stats.activeRequests}
-            subtitle="W trakcie"
-            color="text-purple-600"
-            trend={1}
-            percentage={20}
-            onClick={() => onNavigate('admin-returns')}
-          />
-          
-          <StatCard
-            icon={CheckCircle}
-            title="Zakończone"
-            value={stats.completedRequests}
-            subtitle="Ten miesiąc"
-            color="text-teal-600"
-            trend={1}
-            percentage={25}
-            onClick={() => onNavigate('admin-returns')}
-          />
+        
+        <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <Calendar className="w-4 h-4" />
+          <span>Ostatnia aktualizacja: {new Date().toLocaleDateString('pl-PL', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}</span>
         </div>
+      </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Quick Actions */}
-          <div className="lg:col-span-2 space-y-6">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+        <StatCard
+          icon={Users}
+          title="Wszyscy klienci"
+          value={stats.totalClients}
+          subtitle="Aktywne firmy"
+          color="text-blue-600"
+          trend={1}
+          percentage={8}
+          onClick={() => onNavigate('admin-clients')}
+        />
+        
+        <StatCard
+          icon={Package}
+          title="Wszystkie bębny"
+          value={stats.totalDrums}
+          subtitle="W systemie"
+          color="text-green-600"
+          trend={1}
+          percentage={12}
+          onClick={() => onNavigate('admin-drums')}
+        />
+        
+        <StatCard
+          icon={Clock}
+          title="Oczekujące zwroty"
+          value={stats.pendingReturns}
+          subtitle="Do zatwierdzenia"
+          color="text-yellow-600"
+          trend={-1}
+          percentage={5}
+          onClick={() => onNavigate('admin-returns')}
+        />
+        
+        <StatCard
+          icon={AlertTriangle}
+          title="Przekroczenia"
+          value={stats.overdueReturns}
+          subtitle="Przeterminowane"
+          color="text-red-600"
+          trend={-1}
+          percentage={15}
+          onClick={() => onNavigate('admin-drums')}
+        />
+        
+        <StatCard
+          icon={Truck}
+          title="Aktywne zgłoszenia"
+          value={stats.activeRequests}
+          subtitle="W trakcie"
+          color="text-purple-600"
+          trend={1}
+          percentage={20}
+          onClick={() => onNavigate('admin-returns')}
+        />
+        
+        <StatCard
+          icon={CheckCircle}
+          title="Zakończone"
+          value={stats.completedRequests}
+          subtitle="Ten miesiąc"
+          color="text-teal-600"
+          trend={1}
+          percentage={25}
+          onClick={() => onNavigate('admin-returns')}
+        />
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Quick Actions */}
+        <div className="lg:col-span-2 space-y-6">
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                 <Activity className="w-5 h-5 mr-2 text-blue-600" />
@@ -428,7 +425,6 @@ const AdminDashboard = ({ onNavigate }) => {
             )}
           </div>
         </div>
-      </div>
     </div>
   );
 };
