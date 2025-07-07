@@ -419,8 +419,8 @@ const DrumsList = ({ user, onNavigate }) => {
   // Loading State
   if (loading && userDrums.length === 0) {
     return (
-      <div className="min-h-screen pt-6 lg:ml-80 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="">
+        <div className="">
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-gray-600">Ładowanie twoich bębnów...</p>
