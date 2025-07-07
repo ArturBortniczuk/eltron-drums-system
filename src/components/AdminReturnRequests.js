@@ -483,8 +483,8 @@ const AdminReturnRequests = ({ onNavigate, initialFilter = {} }) => {
   };
 
   return (
-    <div className="min-h-screen pt-6 lg:ml-80 transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="">
+      <div className="">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
