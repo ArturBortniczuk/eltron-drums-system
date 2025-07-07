@@ -154,7 +154,7 @@ const Navbar = ({
           </div>
 
           {/* Navigation Menu */}
-          <nav className="flex-1 p-6 space-y-3">
+          <nav className="flex-1 p-6 space-y-3 overflow-y-auto">
             <div className="mb-6">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 Nawigacja
@@ -173,7 +173,7 @@ const Navbar = ({
           </nav>
 
           {/* Logout Button */}
-          <div className="p-6 border-t border-blue-100">
+          <div className="p-6 border-t border-blue-100 mt-auto">
             <button
               onClick={onLogout}
               className="w-full p-4 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200 flex items-center space-x-3 group"
