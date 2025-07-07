@@ -1,6 +1,5 @@
 // /api/auth/login.js
 
-// Importujemy 'sql' z oficjalnego pakietu Vercel
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -21,7 +20,6 @@ export default async function handler(req, res) {
     let isPasswordCorrect = false;
 
     if (type === 'admin') {
-      // Używamy 'sql' do wykonania zapytania - jest bezpieczniejsze i zoptymalizowane
       const { rows } = await sql`
         SELECT * FROM admin_users WHERE login = ${login};
       `;
@@ -36,6 +34,13 @@ export default async function handler(req, res) {
       if (rows.length > 0) {
         user = rows[0];
         isPasswordCorrect = await bcrypt.compare(password, user.password_hash);
+        
+        // Jeśli logowanie się powiedzie, zaktualizuj datę ostatniego logowania
+        if (isPasswordCorrect) {
+          await sql`
+            UPDATE users SET last_login = NOW(), is_first_login = FALSE WHERE id = ${user.id};
+          `;
+        }
       }
     } else {
       return res.status(400).json({ message: 'Invalid user type' });
@@ -45,7 +50,6 @@ export default async function handler(req, res) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generowanie tokenu JWT
     const token = jwt.sign(
       { userId: user.id, login: user.login || user.nip, role: user.role || 'client' },
       process.env.STACK_SECRET_SERVER_KEY,
