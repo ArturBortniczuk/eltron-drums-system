@@ -433,8 +433,8 @@ const DrumsList = ({ user, onNavigate }) => {
   // Error State
   if (error && userDrums.length === 0) {
     return (
-      <div className="min-h-screen pt-6 lg:ml-80 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="">
+        <div className="">
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -463,8 +463,8 @@ const DrumsList = ({ user, onNavigate }) => {
   }
 
   return (
-    <div className="min-h-screen pt-6 lg:ml-80 transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="">
+      <div className="">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
