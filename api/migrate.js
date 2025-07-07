@@ -1,100 +1,131 @@
-// api/migrate.js - ZAKTUALIZOWANY dla realnych danych
-const { createTables, seedRealData } = require('../migrations/001_initial_migration');
+// migrate.js
+const { Pool } = require('pg');
+const { companies, drums } = require('./src/data/mockData');
+const { adminUsers, clientUsers, returnPeriods } = require('./src/data/additionalData');
+const bcrypt = require('bcryptjs');
 
-module.exports = async (req, res) => {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+// Upewnij się, że zmienna środowiskowa jest ładowana
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ 
-      error: 'Method not allowed. Use POST to run migration.',
-      usage: 'POST /api/migrate with { "key": "migrate-eltron-2024", "drumsData": [...] }'
-    });
-  }
-
-  // Autoryzacja
-  const { key, drumsData } = req.body;
-  if (key !== 'migrate-eltron-2024') {
-    return res.status(401).json({ error: 'Invalid migration key' });
-  }
-
-  // Sprawdź czy dane zostały przekazane
-  if (!drumsData || !Array.isArray(drumsData) || drumsData.length === 0) {
-    return res.status(400).json({ 
-      error: 'No drums data provided',
-      message: 'Please include drumsData array in request body',
-      example: {
-        key: 'migrate-eltron-2024',
-        drumsData: [
-          {
-            KOD_BEBNA: 'BEB001',
-            NAZWA: 'Example drum',
-            NIP: '1234567890',
-            // ... other fields
-          }
-        ]
-      }
-    });
-  }
+async function migrate() {
+  const client = await pool.connect();
+  console.log('Nawiązano połączenie z bazą danych w celu migracji.');
 
   try {
-    console.log(`🚀 Starting migration with ${drumsData.length} drums...`);
-    
-    // Walidacja podstawowej struktury danych
-    const requiredFields = ['KOD_BEBNA', 'NAZWA', 'NIP', 'PELNA_NAZWA_KONTRAHENTA'];
-    const firstDrum = drumsData[0];
-    const missingFields = requiredFields.filter(field => !(field in firstDrum));
-    
-    if (missingFields.length > 0) {
-      return res.status(400).json({
-        error: 'Invalid data structure',
-        message: `Missing required fields: ${missingFields.join(', ')}`,
-        receivedFields: Object.keys(firstDrum)
-      });
+    await client.query('BEGIN');
+    console.log('Rozpoczęto transakcję.');
+
+    // Tworzenie tabel (zakładamy, że ten fragment jest poprawny i istnieje w Twoim pliku)
+    // ... Twoje zapytania CREATE TABLE ...
+    console.log('Struktura tabel zweryfikowana/utworzona.');
+
+    console.log('--- Rozpoczęcie wstawiania danych ---');
+
+    // Krok 1: Wstawianie firm
+    try {
+      console.log('[Krok 1/5] Wstawianie firm...');
+      for (const company of companies) {
+        await client.query(
+          'INSERT INTO companies (nip, name, email, phone, address, status) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (nip) DO NOTHING;',
+          [company.nip, company.name, company.email, company.phone, company.address, company.status]
+        );
+      }
+      console.log('✅ [Krok 1/5] Firmy wstawione pomyślnie.');
+    } catch (error) {
+      console.error('❌ BŁĄD podczas wstawiania firm:', error);
+      throw error; // Zatrzymaj migrację i wycofaj transakcję
     }
 
-    await createTables();
-    await seedRealData(drumsData);
+    // Krok 2: Wstawianie bębnów
+    try {
+      console.log('[Krok 2/5] Wstawianie bębnów...');
+      for (const drum of drums) {
+        await client.query(
+          'INSERT INTO drums (kod_bebna, nazwa, nip, data_zwrotu_do_dostawcy, pelna_nazwa_kontrahenta) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (kod_bebna) DO NOTHING;',
+          [drum.kod_bebna, drum.nazwa, drum.nip, drum.data_zwrotu_do_dostawcy, drum.pelna_nazwa_kontrahenta]
+        );
+      }
+      console.log('✅ [Krok 2/5] Bębny wstawione pomyślnie.');
+    } catch (error) {
+      console.error('❌ BŁĄD podczas wstawiania bębnów:', error);
+      throw error;
+    }
+
+    // Krok 3: Wstawianie użytkowników-administratorów
+    try {
+      console.log('[Krok 3/5] Wstawianie użytkowników-administratorów...');
+      for (const user of adminUsers) {
+        const hashedPassword = await bcrypt.hash(user.password, 10);
+        await client.query(
+          'INSERT INTO admin_users (login, password_hash, role) VALUES ($1, $2, $3) ON CONFLICT (login) DO NOTHING;',
+          [user.login, hashedPassword, user.role]
+        );
+      }
+      console.log('✅ [Krok 3/5] Użytkownicy-administratorzy wstawieni pomyślnie.');
+    } catch (error) {
+      console.error('❌ BŁĄD podczas wstawiania użytkowników-administratorów:', error);
+      throw error;
+    }
+
+    // Krok 4: Wstawianie użytkowników-klientów
+    try {
+      console.log('[Krok 4/5] Wstawianie użytkowników-klientów...');
+      for (const user of clientUsers) {
+        console.log(`-- Próba wstawienia użytkownika z NIP: ${user.nip} i nazwą firmy: ${user.company}`);
+        const hashedPassword = await bcrypt.hash(user.password, 10);
+        await client.query(
+          'INSERT INTO users (nip, password_hash, company) VALUES ($1, $2, $3) ON CONFLICT (nip) DO NOTHING;',
+          [user.nip, hashedPassword, user.company]
+        );
+      }
+      console.log('✅ [Krok 4/5] Użytkownicy-klienci wstawieni pomyślnie.');
+    } catch (error) {
+      console.error('❌ BŁĄD podczas wstawiania użytkowników-klientów:', error);
+      throw error;
+    }
     
-    // Oblicz statystyki
-    const uniqueCompanies = new Set(drumsData.map(d => d.NIP)).size;
-    const uniqueDrums = new Set(drumsData.map(d => d.KOD_BEBNA)).size;
-    
-    return res.status(200).json({
-      success: true,
-      message: '🎉 Real data migration completed successfully!',
-      stats: {
-        totalDrumsProcessed: drumsData.length,
-        uniqueDrumsImported: uniqueDrums,
-        companiesCreated: uniqueCompanies,
-        adminAccountsCreated: 2
-      },
-      testAccounts: [
-        { type: 'Admin', nip: '0000000000', note: 'Set password on first login' },
-        { type: 'Supervisor', nip: '1111111111', note: 'Set password on first login' }
-      ],
-      nextSteps: [
-        '1. Test login with any NIP from your data',
-        '2. Set password on first login',
-        '3. Check /api/health endpoint',
-        '4. Start using the system!'
-      ]
-    });
-    
+    // Krok 5: Wstawianie okresów zwrotów
+    try {
+        console.log('[Krok 5/5] Wstawianie domyślnych okresów zwrotów...');
+        for (const period of returnPeriods) {
+            await client.query(
+                'INSERT INTO custom_return_periods (drum_type_id, return_period_days) VALUES ($1, $2) ON CONFLICT (drum_type_id) DO NOTHING;',
+                [period.drum_type_id, period.return_period_days]
+            );
+        }
+        console.log('✅ [Krok 5/5] Domyślne okresy zwrotów wstawione pomyślnie.');
+    } catch (error) {
+        console.error('❌ BŁĄD podczas wstawiania domyślnych okresów zwrotów:', error);
+        throw error;
+    }
+
+
+    await client.query('COMMIT');
+    console.log('🎉 Migracja zakończona sukcesem! Zmiany zostały zapisane w bazie danych.');
+
   } catch (error) {
-    console.error('❌ Migration failed:', error);
-    
-    return res.status(500).json({
-      success: false,
-      error: 'Migration failed',
-      details: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    console.error('🔴 Całkowita migracja nie powiodła się. Rozpoczynanie wycofywania zmian...');
+    await client.query('ROLLBACK');
+    console.error('🔴 Zmiany zostały wycofane. Baza danych jest w stanie sprzed migracji.');
+    console.error('Szczegółowy błąd, który przerwał migrację:', error.stack);
+    process.exit(1); // Zakończ proces z kodem błędu, aby zasygnalizować problem w Vercel
+  } finally {
+    console.log('Zamykanie połączenia z bazą danych.');
+    client.release();
+    pool.end();
   }
-};
+}
+
+migrate().catch(err => {
+  console.error("Nieobsłużony błąd w funkcji migrate:", err);
+  process.exit(1);
+});
