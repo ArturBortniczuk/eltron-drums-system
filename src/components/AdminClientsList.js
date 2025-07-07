@@ -21,6 +21,7 @@ import {
   Edit,
   Trash2
 } from 'lucide-react';
+
 const AdminClientsList = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
@@ -303,134 +304,134 @@ const AdminClientsList = ({ onNavigate }) => {
   };
 
   return (
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-                Zarządzanie klientami
-              </h1>
-              <p className="text-gray-600">Przeglądaj i zarządzaj wszystkimi klientami w systemie</p>
-            </div>
+    <div>
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center space-x-4 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+            <Users className="w-6 h-6 text-white" />
           </div>
-
-          {/* Filters and Search */}
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-blue-100 mb-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* Search */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Szukaj po nazwie, NIP lub email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
-                />
-              </div>
-
-              {/* Filter */}
-              <div className="relative">
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="appearance-none bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                >
-                  <option value="all">Wszyscy klienci</option>
-                  <option value="active">Aktywni</option>
-                  <option value="high-risk">Wysokie ryzyko</option>
-                  <option value="pending">Z oczekującymi</option>
-                </select>
-                <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
-
-              {/* Sort */}
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleSort('name')}
-                  className={`px-4 py-3 rounded-xl border transition-all duration-200 flex items-center space-x-2 ${
-                    sortBy === 'name' 
-                      ? 'bg-blue-600 text-white border-blue-600' 
-                      : 'bg-white text-gray-600 border-gray-300 hover:bg-blue-50'
-                  }`}
-                >
-                  <span>Nazwa</span>
-                  <ArrowUpDown className="w-4 h-4" />
-                </button>
-                
-                <button
-                  onClick={() => handleSort('lastActivity')}
-                  className={`px-4 py-3 rounded-xl border transition-all duration-200 flex items-center space-x-2 ${
-                    sortBy === 'lastActivity' 
-                      ? 'bg-blue-600 text-white border-blue-600' 
-                      : 'bg-white text-gray-600 border-gray-300 hover:bg-blue-50'
-                  }`}
-                >
-                  <span>Aktywność</span>
-                  <ArrowUpDown className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              Zarządzanie klientami
+            </h1>
+            <p className="text-gray-600">Przeglądaj i zarządzaj wszystkimi klientami w systemie</p>
           </div>
+        </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-blue-100 text-center">
-              <div className="text-2xl font-bold text-blue-600">{enrichedClients.length}</div>
-              <div className="text-sm text-gray-600">Wszyscy klienci</div>
+        {/* Filters and Search */}
+        <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-blue-100 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Szukaj po nazwie, NIP lub email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+              />
             </div>
-            <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-green-100 text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {enrichedClients.filter(c => c.riskLevel === 'low').length}
-              </div>
-              <div className="text-sm text-gray-600">Niskie ryzyko</div>
+
+            {/* Filter */}
+            <div className="relative">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="appearance-none bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              >
+                <option value="all">Wszyscy klienci</option>
+                <option value="active">Aktywni</option>
+                <option value="high-risk">Wysokie ryzyko</option>
+                <option value="pending">Z oczekującymi</option>
+              </select>
+              <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
-            <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-yellow-100 text-center">
-              <div className="text-2xl font-bold text-yellow-600">
-                {enrichedClients.filter(c => c.pendingRequests > 0).length}
-              </div>
-              <div className="text-sm text-gray-600">Z oczekującymi</div>
-            </div>
-            <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-red-100 text-center">
-              <div className="text-2xl font-bold text-red-600">
-                {enrichedClients.filter(c => c.riskLevel === 'high').length}
-              </div>
-              <div className="text-sm text-gray-600">Wysokie ryzyko</div>
+
+            {/* Sort */}
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handleSort('name')}
+                className={`px-4 py-3 rounded-xl border transition-all duration-200 flex items-center space-x-2 ${
+                  sortBy === 'name' 
+                    ? 'bg-blue-600 text-white border-blue-600' 
+                    : 'bg-white text-gray-600 border-gray-300 hover:bg-blue-50'
+                }`}
+              >
+                <span>Nazwa</span>
+                <ArrowUpDown className="w-4 h-4" />
+              </button>
+              
+              <button
+                onClick={() => handleSort('lastActivity')}
+                className={`px-4 py-3 rounded-xl border transition-all duration-200 flex items-center space-x-2 ${
+                  sortBy === 'lastActivity' 
+                    ? 'bg-blue-600 text-white border-blue-600' 
+                    : 'bg-white text-gray-600 border-gray-300 hover:bg-blue-50'
+                }`}
+              >
+                <span>Aktywność</span>
+                <ArrowUpDown className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Clients Grid */}
-        {filteredAndSortedClients.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-8">
-            {filteredAndSortedClients.map((client, index) => (
-              <ClientCard key={client.nip} client={client} index={index} />
-            ))}
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-blue-100 text-center">
+            <div className="text-2xl font-bold text-blue-600">{enrichedClients.length}</div>
+            <div className="text-sm text-gray-600">Wszyscy klienci</div>
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Users className="w-12 h-12 text-gray-400" />
+          <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-green-100 text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {enrichedClients.filter(c => c.riskLevel === 'low').length}
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Nie znaleziono klientów</h3>
-            <p className="text-gray-600 mb-6">Spróbuj zmienić kryteria wyszukiwania lub filtry</p>
-            <button
-              onClick={() => {
-                setSearchTerm('');
-                setFilterStatus('all');
-              }}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
-            >
-              Wyczyść filtry
-            </button>
+            <div className="text-sm text-gray-600">Niskie ryzyko</div>
           </div>
-        )}
-
-        <ClientDetailsModal />
+          <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-yellow-100 text-center">
+            <div className="text-2xl font-bold text-yellow-600">
+              {enrichedClients.filter(c => c.pendingRequests > 0).length}
+            </div>
+            <div className="text-sm text-gray-600">Z oczekującymi</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-red-100 text-center">
+            <div className="text-2xl font-bold text-red-600">
+              {enrichedClients.filter(c => c.riskLevel === 'high').length}
+            </div>
+            <div className="text-sm text-gray-600">Wysokie ryzyko</div>
+          </div>
+        </div>
       </div>
+
+      {/* Clients Grid */}
+      {filteredAndSortedClients.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-8">
+          {filteredAndSortedClients.map((client, index) => (
+            <ClientCard key={client.nip} client={client} index={index} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Users className="w-12 h-12 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Nie znaleziono klientów</h3>
+          <p className="text-gray-600 mb-6">Spróbuj zmienić kryteria wyszukiwania lub filtry</p>
+          <button
+            onClick={() => {
+              setSearchTerm('');
+              setFilterStatus('all');
+            }}
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
+          >
+            Wyczyść filtry
+          </button>
+        </div>
+      )}
+
+      <ClientDetailsModal />
     </div>
   );
 };
