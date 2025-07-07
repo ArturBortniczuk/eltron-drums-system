@@ -84,7 +84,7 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentView, setCurrentView] = useState('login');
   const [selectedDrum, setSelectedDrum] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true); // Domyślnie otwarty na desktopie
   const [navigationData, setNavigationData] = useState(null);
   const [appInitialized, setAppInitialized] = useState(false);
   const [initError, setInitError] = useState(null);
@@ -112,6 +112,7 @@ const App = () => {
         } else {
           console.log('ℹ️ No user session found');
           setCurrentView('login');
+          setSidebarOpen(false); // Ukryj sidebar na stronie logowania
         }
         
         setAppInitialized(true);
@@ -149,12 +150,16 @@ const App = () => {
         setSelectedDrum(data);
       }
     }
-    setSidebarOpen(false);
+    // Nie zamykaj sidebara na desktopie przy nawigacji
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
   }, []);
 
   const handleLogin = useCallback((user) => {
     console.log('✅ User logged in:', user);
     setCurrentUser(user);
+    setSidebarOpen(true); // Pokaż sidebar po zalogowaniu
     
     const defaultView = (user.role === 'admin' || user.role === 'supervisor') 
       ? 'admin-dashboard' 
@@ -219,7 +224,7 @@ const App = () => {
         )}
         
         {/* Main Content */}
-        <div className={`transition-all duration-300 ${currentUser ? 'lg:ml-0' : ''}`}>
+        <div className={`transition-all duration-300 ${sidebarOpen && currentUser ? 'lg:ml-80' : 'lg:ml-0'}`}>
           <Suspense fallback={<LoadingSpinner message="Ładowanie strony..." />}>
             {/* Login */}
             {currentView === 'login' && (
