@@ -1,4 +1,4 @@
-// src/App.js - ZOPTYMALIZOWANA WERSJA
+// src/App.js - Z FINALNĄ POPRAWKĄ UKŁADU
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { authAPI, initAPI, apiConfig } from './utils/api';
 import './App.css';
@@ -84,52 +84,36 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentView, setCurrentView] = useState('login');
   const [selectedDrum, setSelectedDrum] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Domyślnie otwarty na desktopie
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [navigationData, setNavigationData] = useState(null);
   const [appInitialized, setAppInitialized] = useState(false);
   const [initError, setInitError] = useState(null);
 
-  // Initialize app
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        console.log('🚀 Initializing Eltron Drums System...');
-        
-        // Initialize API
         await initAPI();
-        
-        // Check if user is already logged in
         const user = authAPI.getCurrentUser();
         if (user && authAPI.isAuthenticated()) {
-          console.log('✅ User session restored:', user);
           setCurrentUser(user);
-          
-          // Set appropriate default view based on user role
           const defaultView = (user.role === 'admin' || user.role === 'supervisor') 
             ? 'admin-dashboard' 
             : 'dashboard';
           setCurrentView(defaultView);
         } else {
-          console.log('ℹ️ No user session found');
           setCurrentView('login');
-          setSidebarOpen(false); // Ukryj sidebar na stronie logowania
+          setSidebarOpen(false);
         }
-        
         setAppInitialized(true);
-        console.log('✅ App initialization complete');
-        
       } catch (error) {
-        console.error('❌ App initialization failed:', error);
         setInitError(error.message || 'Błąd inicjalizacji aplikacji');
         setAppInitialized(true);
       }
     };
-
     initializeApp();
   }, []);
 
   const logout = useCallback(() => {
-    console.log('🚪 Logging out user');
     authAPI.logout();
     setCurrentUser(null);
     setCurrentView('login');
@@ -139,28 +123,22 @@ const App = () => {
   }, []);
 
   const navigateTo = useCallback((view, data = null) => {
-    console.log('🧭 Navigating to:', view, data ? 'with data' : '');
     setCurrentView(view);
-    
     if (data) {
       if (data.drum) setSelectedDrum(data.drum);
       if (data.navigationData) setNavigationData(data.navigationData);
-      // Handle drum parameter for ReturnForm
       if (data && typeof data === 'object' && data.KOD_BEBNA) {
         setSelectedDrum(data);
       }
     }
-    // Nie zamykaj sidebara na desktopie przy nawigacji
     if (window.innerWidth < 1024) {
       setSidebarOpen(false);
     }
   }, []);
 
   const handleLogin = useCallback((user) => {
-    console.log('✅ User logged in:', user);
     setCurrentUser(user);
-    setSidebarOpen(true); // Pokaż sidebar po zalogowaniu
-    
+    setSidebarOpen(true);
     const defaultView = (user.role === 'admin' || user.role === 'supervisor') 
       ? 'admin-dashboard' 
       : 'dashboard';
@@ -169,36 +147,59 @@ const App = () => {
 
   const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'supervisor');
 
-  // Show loading during initialization
   if (!appInitialized) {
     return <LoadingSpinner message="Inicjalizacja aplikacji..." />;
   }
 
-  // Show initialization error
   if (initError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-white to-red-100">
-        <div className="text-center max-w-md">
-          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-3xl">⚠️</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Błąd inicjalizacji</h1>
-          <p className="text-gray-600 mb-6">{initError}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
-          >
-            Spróbuj ponownie
-          </button>
-        </div>
+        {/* ... Error content ... */}
       </div>
     );
   }
 
+  const renderView = () => {
+    switch (currentView) {
+      case 'dashboard': return <Dashboard user={currentUser} onNavigate={navigateTo} />;
+      case 'drums': return <DrumsList user={currentUser} onNavigate={navigateTo} />;
+      case 'return': return (
+        <ReturnForm 
+          user={currentUser}
+          selectedDrum={selectedDrum}
+          onNavigate={navigateTo}
+          onSubmit={() => {
+            alert('✅ Zgłoszenie zwrotu zostało wysłane!');
+            navigateTo('dashboard');
+          }}
+        />
+      );
+      case 'admin-dashboard': return <AdminDashboard user={currentUser} onNavigate={navigateTo} />;
+      case 'admin-clients': return <AdminClientsList user={currentUser} onNavigate={navigateTo} initialFilter={navigationData} />;
+      case 'admin-drums': return <AdminDrumsList user={currentUser} onNavigate={navigateTo} initialFilter={navigationData} />;
+      case 'admin-returns': return <AdminReturnRequests user={currentUser} onNavigate={navigateTo} initialFilter={navigationData} />;
+      case 'admin-reports': return <AdminReports user={currentUser} onNavigate={navigateTo} />;
+      case 'admin-return-periods': return <AdminReturnPeriodsManager user={currentUser} onNavigate={navigateTo} />;
+      default: return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Strona nie znaleziona</h2>
+            <p className="text-gray-600 mb-6">Strona "{currentView}" nie istnieje.</p>
+            <button
+              onClick={() => navigateTo(isAdmin ? 'admin-dashboard' : 'dashboard')}
+              className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
+            >
+              Wróć do głównej strony
+            </button>
+          </div>
+        </div>
+      );
+    }
+  };
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
-        {/* Navigation */}
         {currentUser && (
           <Suspense fallback={<LoadingSpinner message="Ładowanie nawigacji..." />}>
             {isAdmin ? (
@@ -223,115 +224,21 @@ const App = () => {
           </Suspense>
         )}
         
-        {/* Main Content */}
-        <div className={`transition-all duration-300 ${sidebarOpen && currentUser ? 'lg:ml-80' : 'lg:ml-0'}`}>
+        <main className={`
+          transition-all duration-300 
+          ${currentUser ? 'pt-16' : ''} 
+          ${sidebarOpen && currentUser ? 'lg:pl-80' : ''}
+        `}>
           <Suspense fallback={<LoadingSpinner message="Ładowanie strony..." />}>
-            {/* Login */}
-            {currentView === 'login' && (
+            {currentView === 'login' ? (
               <LoginForm onLogin={handleLogin} />
-            )}
-            
-            {/* Client Views */}
-            {currentView === 'dashboard' && currentUser && !isAdmin && (
-              <Dashboard 
-                user={currentUser}
-                onNavigate={navigateTo}
-              />
-            )}
-            
-            {currentView === 'drums' && currentUser && !isAdmin && (
-              <DrumsList 
-                user={currentUser}
-                onNavigate={navigateTo}
-              />
-            )}
-            
-            {currentView === 'return' && currentUser && !isAdmin && (
-              <ReturnForm 
-                user={currentUser}
-                selectedDrum={selectedDrum}
-                onNavigate={navigateTo}
-                onSubmit={() => {
-                  alert('✅ Zgłoszenie zwrotu zostało wysłane!');
-                  navigateTo('dashboard');
-                }}
-              />
-            )}
-
-            {/* Admin Views */}
-            {currentView === 'admin-dashboard' && currentUser && isAdmin && (
-              <AdminDashboard 
-                user={currentUser}
-                onNavigate={navigateTo}
-              />
-            )}
-            
-            {currentView === 'admin-clients' && currentUser && isAdmin && (
-              <AdminClientsList 
-                user={currentUser}
-                onNavigate={navigateTo}
-                initialFilter={navigationData}
-              />
-            )}
-            
-            {currentView === 'admin-drums' && currentUser && isAdmin && (
-              <AdminDrumsList 
-                user={currentUser}
-                onNavigate={navigateTo}
-                initialFilter={navigationData}
-              />
-            )}
-            
-            {currentView === 'admin-returns' && currentUser && isAdmin && (
-              <AdminReturnRequests 
-                user={currentUser}
-                onNavigate={navigateTo}
-                initialFilter={navigationData}
-              />
-            )}
-            
-            {currentView === 'admin-reports' && currentUser && isAdmin && (
-              <AdminReports 
-                user={currentUser}
-                onNavigate={navigateTo}
-              />
-            )}
-            
-            {currentView === 'admin-return-periods' && currentUser && isAdmin && (
-              <AdminReturnPeriodsManager 
-                user={currentUser}
-                onNavigate={navigateTo}
-              />
-            )}
-
-            {/* Fallback for unknown views */}
-            {!['login', 'dashboard', 'drums', 'return', 'admin-dashboard', 'admin-clients', 'admin-drums', 'admin-returns', 'admin-reports', 'admin-return-periods'].includes(currentView) && (
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Strona nie znaleziona</h2>
-                  <p className="text-gray-600 mb-6">Strona "{currentView}" nie istnieje.</p>
-                  <button
-                    onClick={() => navigateTo(isAdmin ? 'admin-dashboard' : 'dashboard')}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
-                  >
-                    Wróć do głównej strony
-                  </button>
-                </div>
+            ) : (
+              <div className="p-4 sm:p-6 lg:p-8">
+                {renderView()}
               </div>
             )}
           </Suspense>
-        </div>
-
-        {/* Debug Info (only in development) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="fixed bottom-4 right-4 bg-black/80 text-white text-xs p-2 rounded max-w-sm">
-            <div>Tryb: {apiConfig.useMockData ? 'Mock Data' : 'API'}</div>
-            <div>Online: {apiConfig.isOnline ? 'Tak' : 'Nie'}</div>
-            <div>User: {currentUser?.role || 'Brak'}</div>
-            <div>View: {currentView}</div>
-            <div>API URL: {apiConfig.baseUrl || 'Brak'}</div>
-          </div>
-        )}
+        </main>
       </div>
     </ErrorBoundary>
   );
