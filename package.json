@@ -2,10 +2,29 @@
   "name": "eltron-drums-system",
   "version": "1.0.0",
   "private": true,
+  "description": "System zarządzania bębnami dla Grupy Eltron",
+  "author": {
+    "name": "Grupa Eltron",
+    "email": "kontakt@grupaeltron.pl"
+  },
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ArturBortniczuk/eltron-drums-system.git"
+  },
+  "homepage": ".",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "node migrate.js && react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "migrate": "node migrate.js"
+  },
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "@vercel/postgres": "^0.9.0",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
@@ -21,12 +40,16 @@
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "node migrate.js && react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "migrate": "node migrate.js"
+  "devDependencies": {
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/line-clamp": "^0.4.4",
+    "@tailwindcss/typography": "^0.5.10",
+    "@vercel/node": "^3.0.21",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.39",
+    "tailwindcss": "^3.4.6",
+    "vercel": "^32.7.2"
   },
   "eslintConfig": {
     "extends": [
@@ -46,14 +69,14 @@
       "last 1 safari version"
     ]
   },
-  "devDependencies": {
-    "@tailwindcss/aspect-ratio": "^0.4.2",
-    "@tailwindcss/forms": "^0.5.7",
-    "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.39",
-    "tailwindcss": "^3.4.6"
-  },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "keywords": [
+    "drums",
+    "management",
+    "system",
+    "eltron",
+    "logistics"
+  ]
 }
