@@ -36,7 +36,6 @@ const AdminDrumsList = ({ onNavigate, initialFilter = {} }) => {
       const now = new Date();
       const returnDate = new Date(drum.DATA_ZWROTU_DO_DOSTAWCY);
       
-      // Poprawka: używamy DATA_WYDANIA zamiast Data przyjęcia na stan
       const issueDate = drum.DATA_WYDANIA && drum.DATA_WYDANIA !== ' ' 
         ? new Date(drum.DATA_WYDANIA) 
         : new Date(drum['Data przyjęcia na stan']);
@@ -55,7 +54,6 @@ const AdminDrumsList = ({ onNavigate, initialFilter = {} }) => {
         statusBg = 'bg-red-100';
         statusBorder = 'border-red-200';
         statusText = `Przeterminowany`;
-        // Dodatkowe info w osobnej linii dla długich tekstów
       } else if (daysDiff <= 7) {
         status = 'due-soon';
         statusColor = 'text-yellow-600';
@@ -91,15 +89,12 @@ const AdminDrumsList = ({ onNavigate, initialFilter = {} }) => {
       
       if (!matchesSearch) return false;
       
-      // Filter by client
       if (filterClient && drum.NIP !== filterClient) return false;
       
-      // Filter by status
       if (filterStatus === 'overdue' && drum.status !== 'overdue') return false;
       if (filterStatus === 'due-soon' && drum.status !== 'due-soon') return false;
       if (filterStatus === 'active' && drum.status !== 'active') return false;
       
-      // Filter by date range
       if (filterDateRange === 'this-week') {
         const weekFromNow = new Date();
         weekFromNow.setDate(weekFromNow.getDate() + 7);
@@ -177,7 +172,6 @@ const AdminDrumsList = ({ onNavigate, initialFilter = {} }) => {
           </div>
         </div>
         
-        {/* Kompaktowy status - tylko ikona + liczba */}
         <div className="flex-shrink-0 ml-2 flex flex-col items-center">
           {drum.status === 'overdue' && (
             <>
@@ -439,190 +433,188 @@ const AdminDrumsList = ({ onNavigate, initialFilter = {} }) => {
   };
 
   return (
-    <div className="min-h-screen pt-6 lg:ml-80 transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-                <Package className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-800 bg-clip-text text-transparent">
-                  Wszystkie bębny
-                </h1>
-                <p className="text-gray-600">Monitoruj i zarządzaj wszystkimi bębnami w systemie</p>
-              </div>
+    <div className="transition-all duration-300">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+              <Package className="w-6 h-6 text-white" />
             </div>
-            
-            <div className="flex space-x-2">
-              <button className="px-4 py-2 bg-white border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center space-x-2">
-                <Download className="w-4 h-4" />
-                <span>Export</span>
-              </button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2">
-                <RefreshCw className="w-4 h-4" />
-                <span>Odśwież</span>
-              </button>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-800 bg-clip-text text-transparent">
+                Wszystkie bębny
+              </h1>
+              <p className="text-gray-600">Monitoruj i zarządzaj wszystkimi bębnami w systemie</p>
             </div>
           </div>
-
-          {/* Filters */}
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-blue-100 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Szukaj bębnów..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
-                />
-              </div>
-
-              {/* Status Filter */}
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
-              >
-                <option value="all">Wszystkie statusy</option>
-                <option value="active">Aktywne</option>
-                <option value="due-soon">Zbliża się termin</option>
-                <option value="overdue">Przeterminowane</option>
-              </select>
-
-              {/* Client Filter */}
-              <select
-                value={filterClient}
-                onChange={(e) => setFilterClient(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
-              >
-                <option value="">Wszyscy klienci</option>
-                {mockCompanies.map(company => (
-                  <option key={company.nip} value={company.nip}>{company.name}</option>
-                ))}
-              </select>
-
-              {/* Date Range Filter */}
-              <select
-                value={filterDateRange}
-                onChange={(e) => setFilterDateRange(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
-              >
-                <option value="all">Wszystkie terminy</option>
-                <option value="this-week">Ten tydzień</option>
-                <option value="this-month">Ten miesiąc</option>
-                <option value="overdue">Przeterminowane</option>
-              </select>
-            </div>
-
-            {/* Sort buttons */}
-            <div className="flex flex-wrap gap-2 mt-4">
-              <button
-                onClick={() => handleSort('KOD_BEBNA')}
-                className={`px-3 py-2 rounded-lg border transition-all duration-200 flex items-center space-x-2 text-sm ${
-                  sortBy === 'KOD_BEBNA' 
-                    ? 'bg-blue-600 text-white border-blue-600' 
-                    : 'bg-white text-gray-600 border-gray-300 hover:bg-blue-50'
-                }`}
-              >
-                <span>Kod</span>
-                <ArrowUpDown className="w-3 h-3" />
-              </button>
-              
-              <button
-                onClick={() => handleSort('DATA_ZWROTU_DO_DOSTAWCY')}
-                className={`px-3 py-2 rounded-lg border transition-all duration-200 flex items-center space-x-2 text-sm ${
-                  sortBy === 'DATA_ZWROTU_DO_DOSTAWCY' 
-                    ? 'bg-blue-600 text-white border-blue-600' 
-                    : 'bg-white text-gray-600 border-gray-300 hover:bg-blue-50'
-                }`}
-              >
-                <span>Termin zwrotu</span>
-                <ArrowUpDown className="w-3 h-3" />
-              </button>
-              
-              <button
-                onClick={() => handleSort('company')}
-                className={`px-3 py-2 rounded-lg border transition-all duration-200 flex items-center space-x-2 text-sm ${
-                  sortBy === 'company' 
-                    ? 'bg-blue-600 text-white border-blue-600' 
-                    : 'bg-white text-gray-600 border-gray-300 hover:bg-blue-50'
-                }`}
-              >
-                <span>Klient</span>
-                <ArrowUpDown className="w-3 h-3" />
-              </button>
-              
-              <button
-                onClick={() => handleSort('daysInPossession')}
-                className={`px-3 py-2 rounded-lg border transition-all duration-200 flex items-center space-x-2 text-sm ${
-                  sortBy === 'daysInPossession' 
-                    ? 'bg-blue-600 text-white border-blue-600' 
-                    : 'bg-white text-gray-600 border-gray-300 hover:bg-blue-50'
-                }`}
-              >
-                <span>Dni w posiadaniu</span>
-                <ArrowUpDown className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-blue-100 text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-              <div className="text-sm text-gray-600">Wszystkie bębny</div>
-            </div>
-            <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-green-100 text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-              <div className="text-sm text-gray-600">Aktywne</div>
-            </div>
-            <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-yellow-100 text-center">
-              <div className="text-2xl font-bold text-yellow-600">{stats.dueSoon}</div>
-              <div className="text-sm text-gray-600">Zbliża się termin</div>
-            </div>
-            <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-red-100 text-center">
-              <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
-              <div className="text-sm text-gray-600">Przeterminowane</div>
-            </div>
+          
+          <div className="flex space-x-2">
+            <button className="px-4 py-2 bg-white border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center space-x-2">
+              <Download className="w-4 h-4" />
+              <span>Export</span>
+            </button>
+            <button className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2">
+              <RefreshCw className="w-4 h-4" />
+              <span>Odśwież</span>
+            </button>
           </div>
         </div>
 
-        {/* Drums Grid */}
-        {filteredAndSortedDrums.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 items-stretch">
-            {filteredAndSortedDrums.map((drum, index) => (
-              <DrumCard key={drum.KOD_BEBNA} drum={drum} index={index} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Package className="w-12 h-12 text-gray-400" />
+        {/* Filters */}
+        <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-blue-100 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Szukaj bębnów..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+              />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Nie znaleziono bębnów</h3>
-            <p className="text-gray-600 mb-6">Spróbuj zmienić kryteria wyszukiwania lub filtry</p>
-            <button
-              onClick={() => {
-                setSearchTerm('');
-                setFilterStatus('all');
-                setFilterClient('');
-                setFilterDateRange('all');
-              }}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
+
+            {/* Status Filter */}
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
             >
-              Wyczyść filtry
+              <option value="all">Wszystkie statusy</option>
+              <option value="active">Aktywne</option>
+              <option value="due-soon">Zbliża się termin</option>
+              <option value="overdue">Przeterminowane</option>
+            </select>
+
+            {/* Client Filter */}
+            <select
+              value={filterClient}
+              onChange={(e) => setFilterClient(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+            >
+              <option value="">Wszyscy klienci</option>
+              {mockCompanies.map(company => (
+                <option key={company.nip} value={company.nip}>{company.name}</option>
+              ))}
+            </select>
+
+            {/* Date Range Filter */}
+            <select
+              value={filterDateRange}
+              onChange={(e) => setFilterDateRange(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+            >
+              <option value="all">Wszystkie terminy</option>
+              <option value="this-week">Ten tydzień</option>
+              <option value="this-month">Ten miesiąc</option>
+              <option value="overdue">Przeterminowane</option>
+            </select>
+          </div>
+
+          {/* Sort buttons */}
+          <div className="flex flex-wrap gap-2 mt-4">
+            <button
+              onClick={() => handleSort('KOD_BEBNA')}
+              className={`px-3 py-2 rounded-lg border transition-all duration-200 flex items-center space-x-2 text-sm ${
+                sortBy === 'KOD_BEBNA' 
+                  ? 'bg-blue-600 text-white border-blue-600' 
+                  : 'bg-white text-gray-600 border-gray-300 hover:bg-blue-50'
+              }`}
+            >
+              <span>Kod</span>
+              <ArrowUpDown className="w-3 h-3" />
+            </button>
+            
+            <button
+              onClick={() => handleSort('DATA_ZWROTU_DO_DOSTAWCY')}
+              className={`px-3 py-2 rounded-lg border transition-all duration-200 flex items-center space-x-2 text-sm ${
+                sortBy === 'DATA_ZWROTU_DO_DOSTAWCY' 
+                  ? 'bg-blue-600 text-white border-blue-600' 
+                  : 'bg-white text-gray-600 border-gray-300 hover:bg-blue-50'
+              }`}
+            >
+              <span>Termin zwrotu</span>
+              <ArrowUpDown className="w-3 h-3" />
+            </button>
+            
+            <button
+              onClick={() => handleSort('company')}
+              className={`px-3 py-2 rounded-lg border transition-all duration-200 flex items-center space-x-2 text-sm ${
+                sortBy === 'company' 
+                  ? 'bg-blue-600 text-white border-blue-600' 
+                  : 'bg-white text-gray-600 border-gray-300 hover:bg-blue-50'
+              }`}
+            >
+              <span>Klient</span>
+              <ArrowUpDown className="w-3 h-3" />
+            </button>
+            
+            <button
+              onClick={() => handleSort('daysInPossession')}
+              className={`px-3 py-2 rounded-lg border transition-all duration-200 flex items-center space-x-2 text-sm ${
+                sortBy === 'daysInPossession' 
+                  ? 'bg-blue-600 text-white border-blue-600' 
+                  : 'bg-white text-gray-600 border-gray-300 hover:bg-blue-50'
+              }`}
+            >
+              <span>Dni w posiadaniu</span>
+              <ArrowUpDown className="w-3 h-3" />
             </button>
           </div>
-        )}
+        </div>
 
-        <DrumDetailsModal />
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-blue-100 text-center">
+            <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
+            <div className="text-sm text-gray-600">Wszystkie bębny</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-green-100 text-center">
+            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <div className="text-sm text-gray-600">Aktywne</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-yellow-100 text-center">
+            <div className="text-2xl font-bold text-yellow-600">{stats.dueSoon}</div>
+            <div className="text-sm text-gray-600">Zbliża się termin</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-red-100 text-center">
+            <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
+            <div className="text-sm text-gray-600">Przeterminowane</div>
+          </div>
+        </div>
       </div>
+
+      {/* Drums Grid */}
+      {filteredAndSortedDrums.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 items-stretch">
+          {filteredAndSortedDrums.map((drum, index) => (
+            <DrumCard key={drum.KOD_BEBNA} drum={drum} index={index} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Package className="w-12 h-12 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Nie znaleziono bębnów</h3>
+          <p className="text-gray-600 mb-6">Spróbuj zmienić kryteria wyszukiwania lub filtry</p>
+          <button
+            onClick={() => {
+              setSearchTerm('');
+              setFilterStatus('all');
+              setFilterClient('');
+              setFilterDateRange('all');
+            }}
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
+          >
+            Wyczyść filtry
+          </button>
+        </div>
+      )}
+
+      <DrumDetailsModal />
     </div>
   );
 };
