@@ -206,19 +206,19 @@ const AdminNavbar = ({
       {/* Sidebar Overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-16 left-0 z-40 w-80 h-[calc(100vh-4rem)] bg-white/95 backdrop-blur-md 
+        fixed top-0 left-0 z-40 w-80 h-screen bg-white/95 backdrop-blur-md 
         border-r border-purple-100 shadow-xl transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0
       `}>
         <div className="h-full flex flex-col">
+          <div className="h-16 flex-shrink-0"></div> {/* Spacer for header */}
           {/* User Info */}
           <div className="p-6 border-b border-purple-100 bg-gradient-to-r from-purple-50 to-blue-100">
             <div className="flex items-center space-x-4 mb-3">
@@ -256,32 +256,9 @@ const AdminNavbar = ({
                 ))}
               </div>
             </div>
-
-            {/* Quick Stats */}
-            <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 border border-gray-200">
-              <h5 className="text-sm font-semibold text-gray-700 mb-3">Szybkie statystyki</h5>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Aktywne klientów:</span>
-                  <span className="font-medium text-blue-600">5</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Wszystkie bębny:</span>
-                  <span className="font-medium text-green-600">12</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Oczekujące zwroty:</span>
-                  <span className="font-medium text-yellow-600">1</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Pilne sprawy:</span>
-                  <span className="font-medium text-red-600">2</span>
-                </div>
-              </div>
-            </div>
           </nav>
 
-          {/* System Info & Logout Button */}
+          {/* Logout Button */}
           <div className="p-6 border-t border-purple-100 mt-auto">
             <button
               onClick={onLogout}
@@ -298,9 +275,6 @@ const AdminNavbar = ({
           </div>
         </div>
       </aside>
-
-      {/* Spacer for fixed header */}
-      <div className="h-16"></div>
     </>
   );
 };
