@@ -127,19 +127,19 @@ const Navbar = ({
       {/* Sidebar Overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-16 left-0 z-40 w-80 h-[calc(100vh-4rem)] bg-white/95 backdrop-blur-md 
+        fixed top-0 left-0 z-40 w-80 h-screen bg-white/95 backdrop-blur-md 
         border-r border-blue-100 shadow-xl transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0
       `}>
         <div className="h-full flex flex-col">
+          <div className="h-16 flex-shrink-0"></div> {/* Spacer for header */}
           {/* User Info */}
           <div className="p-6 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-blue-100">
             <div className="flex items-center space-x-4">
@@ -186,9 +186,6 @@ const Navbar = ({
           </div>
         </div>
       </aside>
-
-      {/* Spacer for fixed header */}
-      <div className="h-16"></div>
     </>
   );
 };
