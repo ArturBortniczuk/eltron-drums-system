@@ -240,7 +240,7 @@ const AdminNavbar = ({
           </div>
 
           {/* Navigation Menu */}
-          <nav className="flex-1 p-6 space-y-3">
+          <nav className="flex-1 p-6 space-y-3 overflow-y-auto">
             <div className="mb-6">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 Zarządzanie systemem
@@ -281,20 +281,8 @@ const AdminNavbar = ({
             </div>
           </nav>
 
-          {/* System Info */}
-          <div className="p-4 border-t border-purple-100 bg-gray-50">
-            <div className="text-xs text-gray-500 space-y-1">
-              <div>System v1.0.0</div>
-              <div>Ostatnia aktualizacja: 26.05.2025</div>
-              <div className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Wszystkie systemy działają</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Logout Button */}
-          <div className="p-6 border-t border-purple-100">
+          {/* System Info & Logout Button */}
+          <div className="p-6 border-t border-purple-100 mt-auto">
             <button
               onClick={onLogout}
               className="w-full p-4 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200 flex items-center space-x-3 group"
