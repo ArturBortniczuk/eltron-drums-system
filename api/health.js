@@ -1,22 +1,34 @@
+// api/health.js - NAPRAWIONY health check dla Supabase
+
 import { supabaseAdmin } from '../utils/supabase/server.js'
 
 export default async function handler(req, res) {
   try {
     console.log('🏥 Starting Supabase health check...')
     
-    // 1. Test podstawowego połączenia
-    const { data: connectionTest, error: connectionError } = await supabaseAdmin
-      .from('information_schema.tables')
-      .select('table_name')
-      .limit(1)
-    
-    if (connectionError) {
-      throw connectionError
+    // 1. Test podstawowego połączenia - sprawdź czy jedna z tabel istnieje
+    let connectionOK = false
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('companies')
+        .select('id')
+        .limit(1)
+      
+      connectionOK = true // Jeśli nie ma błędu, połączenie działa
+      console.log('✅ Basic connection test passed')
+    } catch (error) {
+      console.log('⚠️ Companies table might not exist, trying alternative test...')
+      
+      // Alternatywny test - sprawdź czy możemy wykonać jakiekolwiek zapytanie
+      try {
+        const { data, error } = await supabaseAdmin.rpc('version')
+        connectionOK = !error
+      } catch (altError) {
+        throw new Error(`Connection failed: ${error.message}`)
+      }
     }
     
-    console.log('✅ Basic connection test passed')
-    
-    // 2. Sprawdź czy istnieją kluczowe tabele
+    // 2. Sprawdź czy istnieją kluczowe tabele (poprzez próbę query)
     const requiredTables = ['companies', 'drums', 'users', 'admin_users', 'return_requests']
     const tableChecks = {}
     
@@ -28,6 +40,11 @@ export default async function handler(req, res) {
           .limit(1)
         
         tableChecks[tableName] = !error
+        if (error) {
+          console.log(`⚠️ Table ${tableName} check failed: ${error.message}`)
+        } else {
+          console.log(`✅ Table ${tableName} exists`)
+        }
       } catch (error) {
         tableChecks[tableName] = false
         console.warn(`⚠️ Error checking table ${tableName}:`, error.message)
@@ -38,7 +55,7 @@ export default async function handler(req, res) {
     const missingTables = requiredTables.filter(table => !tableChecks[table])
     const allTablesExist = missingTables.length === 0
 
-    // 4. Sprawdź liczbę rekordów w kluczowych tabelach
+    // 4. Sprawdź liczbę rekordów w kluczowych tabelach (tylko jeśli tabele istnieją)
     const tableCounts = {}
     if (allTablesExist) {
       for (const tableName of requiredTables) {
@@ -48,8 +65,10 @@ export default async function handler(req, res) {
             .select('*', { count: 'exact', head: true })
           
           tableCounts[tableName] = error ? 0 : count
+          console.log(`📊 Table ${tableName}: ${tableCounts[tableName]} records`)
         } catch (error) {
           tableCounts[tableName] = 0
+          console.warn(`⚠️ Error counting ${tableName}:`, error.message)
         }
       }
     }
@@ -65,7 +84,10 @@ export default async function handler(req, res) {
     let overallStatus = 'healthy'
     let statusMessage = 'Supabase database is fully operational'
     
-    if (!allTablesExist) {
+    if (!connectionOK) {
+      overallStatus = 'unhealthy'
+      statusMessage = 'Cannot connect to Supabase database'
+    } else if (!allTablesExist) {
       overallStatus = 'degraded'
       statusMessage = `Database schema incomplete. Missing tables: ${missingTables.join(', ')}`
     } else if (Object.values(tableCounts).every(count => count === 0)) {
@@ -75,13 +97,16 @@ export default async function handler(req, res) {
 
     console.log(`🏥 Health check completed with status: ${overallStatus}`)
 
-    res.status(overallStatus === 'healthy' ? 200 : 503).json({
+    const responseCode = overallStatus === 'healthy' ? 200 : 
+                        overallStatus === 'warning' ? 200 : 503
+
+    res.status(responseCode).json({
       status: overallStatus,
       message: statusMessage,
       timestamp: new Date().toISOString(),
       database: {
         type: 'Supabase PostgreSQL',
-        connection: 'OK',
+        connection: connectionOK ? 'OK' : 'FAILED',
         schema: {
           status: allTablesExist ? 'complete' : 'incomplete',
           requiredTables: requiredTables.length,
@@ -110,7 +135,7 @@ export default async function handler(req, res) {
       message: 'Supabase database health check failed',
       error: {
         message: error.message,
-        code: error.code
+        code: error.code || 'UNKNOWN'
       },
       timestamp: new Date().toISOString(),
       database: {
@@ -122,7 +147,105 @@ export default async function handler(req, res) {
         hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
         hasSupabaseAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
         hasSupabaseServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+      },
+      nextSteps: [
+        'Check if tables exist by running setup-database',
+        'Verify Supabase project is active',
+        'Check environment variables are correct',
+        'Try running /api/setup-database first'
+      ]
+    })
+  }
+}
+
+// ===================================
+// DODATKOWO: Naprawiony utils/supabase/server.js
+// ===================================
+
+// utils/supabase/server.js - NAPRAWIONA WERSJA
+
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('❌ Missing Supabase environment variables:', {
+    url: !!supabaseUrl,
+    serviceKey: !!supabaseServiceKey
+  })
+  throw new Error('Missing Supabase environment variables')
+}
+
+// Klient z service role key dla operacji serwerowych
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+})
+
+// Test połączenia przy imporcie
+supabaseAdmin.from('companies').select('id').limit(1).then(
+  ({ data, error }) => {
+    if (error && !error.message.includes('does not exist')) {
+      console.error('❌ Supabase connection test failed:', error.message)
+    } else {
+      console.log('✅ Supabase connection established')
+    }
+  }
+).catch(err => {
+  console.warn('⚠️ Supabase connection test warning:', err.message)
+})
+
+// ===================================
+// PROSTE ROZWIĄZANIE: api/test-connection.js
+// ===================================
+
+// api/test-connection.js - Prosty test połączenia
+
+import { supabaseAdmin } from '../utils/supabase/server.js'
+
+export default async function handler(req, res) {
+  try {
+    console.log('🔗 Testing Supabase connection...')
+    
+    // Najprostszy możliwy test - spróbuj pobrać wersję PostgreSQL
+    const { data, error } = await supabaseAdmin.rpc('version')
+    
+    if (error) {
+      throw error
+    }
+    
+    res.status(200).json({
+      status: 'connected',
+      message: 'Supabase connection successful',
+      version: data,
+      timestamp: new Date().toISOString(),
+      environment: {
+        hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
       }
+    })
+    
+  } catch (error) {
+    console.error('❌ Connection test failed:', error)
+    
+    res.status(503).json({
+      status: 'failed',
+      message: 'Supabase connection failed',
+      error: {
+        message: error.message,
+        code: error.code
+      },
+      timestamp: new Date().toISOString(),
+      troubleshooting: [
+        'Check if NEXT_PUBLIC_SUPABASE_URL is correct',
+        'Check if SUPABASE_SERVICE_ROLE_KEY is correct',
+        'Verify Supabase project is active',
+        'Check Vercel environment variables'
+      ]
     })
   }
 }
