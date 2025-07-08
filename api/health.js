@@ -1,5 +1,3 @@
-// api/health.js - NAPRAWIONY health check dla Supabase
-
 import { supabaseAdmin } from '../utils/supabase/server.js'
 
 export default async function handler(req, res) {
@@ -153,98 +151,6 @@ export default async function handler(req, res) {
         'Verify Supabase project is active',
         'Check environment variables are correct',
         'Try running /api/setup-database first'
-      ]
-    })
-  }
-}
-
-// ===================================
-// DODATKOWO: Naprawiony utils/supabase/server.js
-// ===================================
-
-// utils/supabase/server.js - NAPRAWIONA WERSJA
-
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('❌ Missing Supabase environment variables:', {
-    url: !!supabaseUrl,
-    serviceKey: !!supabaseServiceKey
-  })
-  throw new Error('Missing Supabase environment variables')
-}
-
-// Klient z service role key dla operacji serwerowych
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
-
-// Test połączenia przy imporcie
-supabaseAdmin.from('companies').select('id').limit(1).then(
-  ({ data, error }) => {
-    if (error && !error.message.includes('does not exist')) {
-      console.error('❌ Supabase connection test failed:', error.message)
-    } else {
-      console.log('✅ Supabase connection established')
-    }
-  }
-).catch(err => {
-  console.warn('⚠️ Supabase connection test warning:', err.message)
-})
-
-// ===================================
-// PROSTE ROZWIĄZANIE: api/test-connection.js
-// ===================================
-
-// api/test-connection.js - Prosty test połączenia
-
-import { supabaseAdmin } from '../utils/supabase/server.js'
-
-export default async function handler(req, res) {
-  try {
-    console.log('🔗 Testing Supabase connection...')
-    
-    // Najprostszy możliwy test - spróbuj pobrać wersję PostgreSQL
-    const { data, error } = await supabaseAdmin.rpc('version')
-    
-    if (error) {
-      throw error
-    }
-    
-    res.status(200).json({
-      status: 'connected',
-      message: 'Supabase connection successful',
-      version: data,
-      timestamp: new Date().toISOString(),
-      environment: {
-        hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-        hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      }
-    })
-    
-  } catch (error) {
-    console.error('❌ Connection test failed:', error)
-    
-    res.status(503).json({
-      status: 'failed',
-      message: 'Supabase connection failed',
-      error: {
-        message: error.message,
-        code: error.code
-      },
-      timestamp: new Date().toISOString(),
-      troubleshooting: [
-        'Check if NEXT_PUBLIC_SUPABASE_URL is correct',
-        'Check if SUPABASE_SERVICE_ROLE_KEY is correct',
-        'Verify Supabase project is active',
-        'Check Vercel environment variables'
       ]
     })
   }
