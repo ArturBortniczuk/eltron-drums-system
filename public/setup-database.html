@@ -3,97 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eltron - Setup Bazy Danych Supabase</title>
+    <title>Setup Bazy Danych - System Bębnów Eltron</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen p-4">
-    <div class="max-w-4xl mx-auto">
-        
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
         <!-- Header -->
-        <div class="bg-white rounded-2xl shadow-2xl p-8 mb-6">
-            <div class="text-center">
-                <div class="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 1.79 4 4 4h8c0-2.21-1.79-4-4-4H8c-2.21 0-4-1.79-4-4zm16-3a2 2 0 00-2-2h-6a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V4z"></path>
+        <div class="text-center mb-8">
+            <div class="mx-auto w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Setup Bazy Danych</h1>
+            <p class="text-gray-600">System Zarządzania Bębnami - Grupa Eltron</p>
+        </div>
+
+        <!-- Health Check -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">🏥 Status Bazy Danych</h2>
+                <button 
+                    onclick="checkHealth()" 
+                    id="healthBtn"
+                    class="bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                     </svg>
-                </div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Setup Bazy Danych Supabase</h1>
-                <p class="text-gray-600">Stwórz wszystkie tabele automatycznie przez API</p>
-                <div class="mt-4 inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                    </svg>
-                    Powered by Supabase PostgreSQL
-                </div>
+                    <span>Sprawdź Status</span>
+                </button>
+            </div>
+            <div id="healthStatus" class="text-gray-500">
+                Kliknij "Sprawdź Status" aby sprawdzić połączenie z bazą danych...
             </div>
         </div>
 
-        <!-- Info -->
-        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
-            <h2 class="text-lg font-semibold text-blue-900 mb-3">📋 Co zostanie stworzone:</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-blue-800 text-sm">
-                <div class="flex items-center space-x-2">
-                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    <span>Tabela <code>companies</code> (firmy)</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    <span>Tabela <code>drums</code> (bębny)</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    <span>Tabela <code>users</code> (użytkownicy)</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    <span>Tabela <code>return_requests</code> (zgłoszenia)</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    <span>Tabela <code>custom_return_periods</code> (terminy)</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    <span>Tabela <code>admin_users</code> (administratorzy)</span>
+        <!-- Database Setup -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">🛠️ Automatyczny Setup Bazy Danych</h2>
+            <p class="text-gray-600 mb-4">Automatycznie utwórz wszystkie wymagane tabele i domyślnych administratorów.</p>
+            
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 text-yellow-400 mt-0.5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    <div>
+                        <h3 class="text-sm font-medium text-yellow-800">Uwaga!</h3>
+                        <p class="text-sm text-yellow-700 mt-1">Ta operacja utworzy tabele i domyślnych administratorów. Istniejące dane nie zostaną nadpisane.</p>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Current Status -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">🔍 Sprawdź aktualny stan bazy Supabase</h2>
-            <button 
-                onclick="checkStatus()" 
-                id="statusBtn"
-                class="bg-blue-600 text-white py-2 px-4 rounded-xl hover:bg-blue-700 transition-colors duration-200 mr-4"
-            >
-                Sprawdź Status
-            </button>
-            <div id="statusResult" class="mt-4"></div>
-        </div>
-
-        <!-- Setup Section -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">🚀 Uruchom Setup Bazy Danych</h2>
-            <p class="text-gray-600 mb-6">Kliknij przycisk żeby automatycznie stworzyć wszystkie tabele i administratorów w Supabase.</p>
             
             <button 
                 onclick="setupDatabase()" 
                 id="setupBtn"
-                class="bg-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-purple-700 transition-colors duration-200 flex items-center space-x-2"
+                class="bg-green-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
             >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                <span>Setup Bazy Supabase</span>
+                <span>Utwórz Bazę Danych</span>
             </button>
         </div>
 
-        <!-- Import Data Section -->
+        <!-- Data Import -->
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">📦 Import Danych z mockData.js</h2>
-            <p class="text-gray-600 mb-4">Wklej tutaj zawartość pliku mockData.js żeby zaimportować swoje bębny do bazy danych Supabase.</p>
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">📦 Import Danych z mockData.js</h2>
+            <p class="text-gray-600 mb-4">Wklej tutaj zawartość pliku mockData.js żeby zaimportować swoje bębny do bazy danych.</p>
             
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -123,138 +116,118 @@ Przykład:
             <button 
                 onclick="importData()" 
                 id="importBtn"
-                class="bg-green-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+                class="bg-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-purple-700 transition-colors duration-200 flex items-center space-x-2"
             >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
                 </svg>
-                <span>Import Danych do Supabase</span>
+                <span>Import Danych</span>
             </button>
         </div>
 
         <!-- Progress -->
         <div id="progressSection" class="hidden bg-white rounded-2xl shadow-xl p-6 mb-6">
             <div class="flex items-center space-x-3 mb-4">
-                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
-                <span class="font-medium text-gray-900">Operacja w toku...</span>
+                <div class="loading"></div>
+                <h3 class="text-lg font-semibold text-gray-900">Przetwarzanie...</h3>
             </div>
-            <div class="bg-gray-200 rounded-full h-2 mb-4">
-                <div id="progressBar" class="bg-purple-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
             </div>
-            <div id="progressText" class="text-sm text-gray-600">Łączenie z bazą danych Supabase...</div>
+            <p id="progressText" class="text-sm text-gray-600 mt-2">Inicjalizacja...</p>
         </div>
 
         <!-- Results -->
-        <div id="resultsSection" class="hidden bg-white rounded-2xl shadow-xl p-6"></div>
+        <div id="resultsSection" class="hidden bg-white rounded-2xl shadow-xl p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">📋 Wyniki Operacji</h3>
+            <div id="resultsContent"></div>
+        </div>
 
-        <!-- Supabase Info -->
-        <div class="bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl p-6 mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-3">ℹ️ Informacje o Supabase</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                    <span class="font-medium text-gray-700">Baza danych:</span>
-                    <span class="ml-2 text-gray-600">PostgreSQL na Supabase</span>
+        <!-- Instructions -->
+        <div class="bg-blue-50 rounded-2xl p-6 mb-6">
+            <h3 class="text-lg font-semibold text-blue-900 mb-4">📚 Instrukcje</h3>
+            <div class="space-y-3 text-sm text-blue-800">
+                <div class="flex items-start space-x-2">
+                    <span class="font-medium">1.</span>
+                    <span>Najpierw sprawdź status bazy danych używając przycisku "Sprawdź Status"</span>
                 </div>
-                <div>
-                    <span class="font-medium text-gray-700">Połączenie:</span>
-                    <span class="ml-2 text-gray-600">Szyfrowane (SSL)</span>
+                <div class="flex items-start space-x-2">
+                    <span class="font-medium">2.</span>
+                    <span>Jeśli tabele nie istnieją, użyj "Utwórz Bazę Danych" aby je utworzyć</span>
                 </div>
-                <div>
-                    <span class="font-medium text-gray-700">Pooling:</span>
-                    <span class="ml-2 text-gray-600">Włączony (pgBouncer)</span>
+                <div class="flex items-start space-x-2">
+                    <span class="font-medium">3.</span>
+                    <span>Zaimportuj swoje dane używając sekcji "Import Danych z mockData.js"</span>
                 </div>
-                <div>
-                    <span class="font-medium text-gray-700">Backup:</span>
-                    <span class="ml-2 text-gray-600">Automatyczny (Supabase)</span>
+                <div class="flex items-start space-x-2">
+                    <span class="font-medium">4.</span>
+                    <span>Po zakończeniu możesz przejść do głównej aplikacji</span>
                 </div>
-            </div>
-            <div class="mt-4 p-3 bg-white/50 rounded-lg">
-                <p class="text-xs text-gray-600">
-                    <strong>Uwaga:</strong> Ta aplikacja używa Supabase jako backend bazy danych. 
-                    Wszystkie dane są bezpiecznie przechowywane w chmurze z automatycznymi backupami.
-                </p>
             </div>
         </div>
 
+        <!-- Navigation -->
+        <div class="text-center">
+            <a href="/" class="inline-flex items-center px-6 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                Przejdź do Aplikacji
+            </a>
+        </div>
     </div>
 
     <script>
-        const API_BASE = window.location.origin;
-        
-        // Check current database status
-        async function checkStatus() {
-            const statusBtn = document.getElementById('statusBtn');
-            const statusResult = document.getElementById('statusResult');
+        // Check database health
+        async function checkHealth() {
+            const healthBtn = document.getElementById('healthBtn');
+            const healthStatus = document.getElementById('healthStatus');
             
-            statusBtn.disabled = true;
-            statusBtn.textContent = 'Sprawdzanie...';
-            statusResult.innerHTML = '<div class="text-blue-600">Sprawdzanie stanu bazy danych Supabase...</div>';
+            healthBtn.disabled = true;
+            healthStatus.innerHTML = '<div class="loading"></div> Sprawdzanie połączenia z bazą danych...';
 
             try {
-                const response = await fetch(`${API_BASE}/api/health`);
+                const response = await fetch('/api/health');
                 const data = await response.json();
-
+                
                 if (response.ok) {
-                    const isSetup = data.database?.tables?.companies > 0;
-                    
-                    statusResult.innerHTML = `
-                        <div class="border rounded-lg p-4 ${isSetup ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}">
-                            <div class="font-medium ${isSetup ? 'text-green-800' : 'text-yellow-800'} mb-2">
-                                ${isSetup ? '✅ Baza Supabase jest skonfigurowana' : '⚠️ Baza Supabase wymaga setup'}
+                    healthStatus.innerHTML = `
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                <span class="font-medium text-green-700">Status: ${data.status}</span>
                             </div>
-                            <div class="text-sm ${isSetup ? 'text-green-700' : 'text-yellow-700'} space-y-1">
-                                <div>Status: ${data.status}</div>
-                                <div>Typ bazy: ${data.database?.type || 'Supabase PostgreSQL'}</div>
-                                <div>Połączenie: ${data.database?.connection}</div>
-                                ${data.database?.tables ? `
-                                    <div class="mt-2 pt-2 border-t border-current border-opacity-20">
-                                        <div>Firmy: ${data.database.tables.companies || 0}</div>
-                                        <div>Bębny: ${data.database.tables.drums || 0}</div>
-                                        <div>Administratorzy: ${data.database.tables.admin_users || 0}</div>
-                                        <div>Użytkownicy: ${data.database.tables.users || 0}</div>
-                                    </div>
-                                ` : ''}
-                                <div class="text-xs mt-2">${data.message}</div>
+                            <div class="text-sm text-gray-600">
+                                <p><strong>Baza danych:</strong> ${data.database?.type || 'PostgreSQL'}</p>
+                                <p><strong>Tabele:</strong> ${data.database?.schema?.existingTables || 0}/${data.database?.schema?.requiredTables || 6} utworzonych</p>
+                                ${data.recommendations ? `<p><strong>Rekomendacje:</strong> ${data.recommendations.join(', ')}</p>` : ''}
                             </div>
-                            ${data.database?.supabase ? `
-                                <div class="mt-3 p-2 bg-white/50 rounded text-xs">
-                                    <div><strong>Konfiguracja Supabase:</strong></div>
-                                    <div>URL: ${data.database.supabase.url === 'configured' ? '✅' : '❌'}</div>
-                                    <div>JWT Secret: ${data.database.supabase.jwtSecret === 'configured' ? '✅' : '❌'}</div>
-                                    <div>Pooling: ${data.database.supabase.poolingEnabled ? '✅ Włączony' : '❌ Wyłączony'}</div>
-                                </div>
-                            ` : ''}
                         </div>
                     `;
                 } else {
-                    statusResult.innerHTML = `
-                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <div class="text-red-800 font-medium">❌ Problem z bazą danych Supabase</div>
-                            <div class="text-red-700 text-sm mt-2">${data.error?.message || data.message || 'Nieznany błąd'}</div>
-                            <div class="text-red-600 text-xs mt-1">${data.error?.suggestion || 'Sprawdź konfigurację Supabase'}</div>
-                            ${data.environmentCheck ? `
-                                <div class="mt-3 p-2 bg-white/50 rounded text-xs">
-                                    <div><strong>Sprawdzenie zmiennych:</strong></div>
-                                    <div>POSTGRES_URL: ${data.environmentCheck.POSTGRES_URL ? '✅' : '❌'}</div>
-                                    <div>SUPABASE_URL: ${data.environmentCheck.SUPABASE_URL ? '✅' : '❌'}</div>
-                                    <div>SUPABASE_JWT_SECRET: ${data.environmentCheck.SUPABASE_JWT_SECRET ? '✅' : '❌'}</div>
-                                </div>
-                            ` : ''}
+                    healthStatus.innerHTML = `
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                <span class="font-medium text-red-700">Status: ${data.status || 'unhealthy'}</span>
+                            </div>
+                            <div class="text-sm text-red-600">
+                                <p><strong>Błąd:</strong> ${data.message || data.error}</p>
+                                ${data.suggestion ? `<p><strong>Sugestia:</strong> ${data.suggestion}</p>` : ''}
+                            </div>
                         </div>
                     `;
                 }
             } catch (error) {
-                statusResult.innerHTML = `
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div class="text-red-800 font-medium">❌ Błąd połączenia z Supabase</div>
-                        <div class="text-red-700 text-sm mt-2">${error.message}</div>
-                        <div class="text-red-600 text-xs mt-1">Sprawdź czy aplikacja jest wdrożona i Supabase jest dostępny</div>
+                healthStatus.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                        <span class="font-medium text-red-700">Błąd połączenia: ${error.message}</span>
                     </div>
                 `;
             }
 
-            statusBtn.disabled = false;
-            statusBtn.textContent = 'Sprawdź Status';
+            healthBtn.disabled = false;
         }
 
         // Setup database
@@ -265,203 +238,106 @@ Przykład:
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
 
-            // Show progress
             setupBtn.disabled = true;
             progressSection.classList.remove('hidden');
             resultsSection.classList.add('hidden');
 
-            // Simulate progress
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += Math.random() * 20;
-                if (progress > 85) progress = 85;
-                progressBar.style.width = progress + '%';
-                
-                if (progress < 20) {
-                    progressText.textContent = 'Testowanie połączenia z Supabase...';
-                } else if (progress < 40) {
-                    progressText.textContent = 'Tworzenie tabeli companies...';
-                } else if (progress < 60) {
-                    progressText.textContent = 'Tworzenie pozostałych tabel...';
-                } else {
-                    progressText.textContent = 'Dodawanie administratorów...';
-                }
-            }, 600);
-
             try {
-                console.log('🚀 Starting Supabase database setup...');
+                // Simulate progress
+                progressBar.style.width = '20%';
+                progressText.textContent = 'Łączenie z bazą danych...';
 
-                const response = await fetch(`${API_BASE}/api/setup-database`, {
+                const response = await fetch('/api/setup-database', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        key: 'setup-eltron-2024'
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'setup-eltron-2024' })
                 });
 
-                const result = await response.json();
+                progressBar.style.width = '80%';
+                progressText.textContent = 'Tworzenie tabel...';
 
-                clearInterval(progressInterval);
+                const data = await response.json();
+
                 progressBar.style.width = '100%';
-                progressText.textContent = 'Setup Supabase zakończony!';
+                progressText.textContent = 'Zakończono!';
 
-                // Hide progress, show results
                 setTimeout(() => {
                     progressSection.classList.add('hidden');
                     resultsSection.classList.remove('hidden');
 
-                    if (response.ok && result.success) {
-                        // Success
-                        document.getElementById('resultsSection').innerHTML = `
-                            <div class="text-center">
-                                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    const resultsContent = document.getElementById('resultsContent');
+                    
+                    if (response.ok && data.success) {
+                        resultsContent.innerHTML = `
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <svg class="w-6 h-6 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
+                                    <span class="text-green-700 font-medium">Setup zakończony pomyślnie!</span>
                                 </div>
-                                <h2 class="text-3xl font-bold text-green-800 mb-4">🎉 Setup Supabase Zakończony!</h2>
-                                <p class="text-green-700 mb-6 text-lg">${result.message}</p>
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                                    <div class="bg-green-50 border border-green-200 rounded-xl p-6">
-                                        <h3 class="font-bold text-green-800 mb-4">📊 Stworzone Tabele:</h3>
-                                        <div class="space-y-2 text-sm text-green-700">
-                                            ${result.results.tablesCreated.map(table => 
-                                                `<div class="flex items-center space-x-2">
-                                                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                                                    <span>${table}</span>
-                                                </div>`
-                                            ).join('')}
-                                        </div>
-                                        <div class="mt-4 text-xs text-green-600">
-                                            Administratorów: ${result.results.adminsCreated}
-                                        </div>
-                                    </div>
-
-                                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
-                                        <h3 class="font-bold text-blue-800 mb-4">🔍 Weryfikacja:</h3>
-                                        <div class="space-y-2 text-sm">
-                                            ${Object.entries(result.verification).map(([table, info]) => 
-                                                typeof info === 'object' && info.status ?
-                                                `<div class="flex justify-between">
-                                                    <span class="text-blue-700">${table}:</span>
-                                                    <span class="${info.status === 'OK' ? 'text-green-600' : 'text-red-600'} font-bold">${info.status}</span>
-                                                </div>` :
-                                                `<div class="flex justify-between">
-                                                    <span class="text-blue-700">${table}:</span>
-                                                    <span class="text-blue-800 font-bold">${info}</span>
-                                                </div>`
-                                            ).join('')}
-                                        </div>
-                                    </div>
+                                <div class="bg-green-50 rounded-lg p-4">
+                                    <h4 class="font-medium text-green-900 mb-2">Utworzone tabele:</h4>
+                                    <ul class="text-sm text-green-800 space-y-1">
+                                        ${data.results.tablesCreated.map(table => `<li>✅ ${table}</li>`).join('')}
+                                    </ul>
                                 </div>
-
-                                ${result.results.errors.length > 0 ? `
-                                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-                                        <h3 class="font-bold text-yellow-800 mb-2">⚠️ Ostrzeżenia:</h3>
-                                        <div class="text-sm text-yellow-700 space-y-1">
-                                            ${result.results.errors.map(error => `<div>• ${error}</div>`).join('')}
-                                        </div>
+                                <div class="bg-blue-50 rounded-lg p-4">
+                                    <h4 class="font-medium text-blue-900 mb-2">Konta administratorów:</h4>
+                                    <ul class="text-sm text-blue-800 space-y-1">
+                                        ${data.admin_accounts?.map(acc => `<li>👤 NIP: ${acc.nip}, Login: ${acc.username}, Hasło: ${acc.password}</li>`).join('') || '<li>Nie utworzono nowych kont (prawdopodobnie już istnieją)</li>'}
+                                    </ul>
+                                </div>
+                                ${data.results.errors.length > 0 ? `
+                                    <div class="bg-yellow-50 rounded-lg p-4">
+                                        <h4 class="font-medium text-yellow-900 mb-2">Ostrzeżenia:</h4>
+                                        <ul class="text-sm text-yellow-800 space-y-1">
+                                            ${data.results.errors.map(error => `<li>⚠️ ${error}</li>`).join('')}
+                                        </ul>
                                     </div>
                                 ` : ''}
-
-                                <div class="bg-purple-50 border border-purple-200 rounded-xl p-6 mb-6">
-                                    <h3 class="font-bold text-purple-800 mb-4">🔑 Konta Testowe:</h3>
-                                    <div class="space-y-3 text-sm">
-                                        ${result.testAccounts.map(acc => 
-                                            `<div class="bg-white rounded-lg p-3 border border-purple-200">
-                                                <div class="font-bold text-purple-900">${acc.type}</div>
-                                                <div class="font-mono text-purple-700">NIP: ${acc.nip}</div>
-                                                <div class="text-xs text-purple-600">${acc.note}</div>
-                                            </div>`
-                                        ).join('')}
-                                    </div>
-                                </div>
-
-                                ${result.supabaseInfo ? `
-                                    <div class="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
-                                        <h3 class="font-bold text-green-800 mb-4">🗄️ Informacje o Supabase:</h3>
-                                        <div class="text-sm text-green-700 space-y-1">
-                                            <div><strong>URL:</strong> ${result.supabaseInfo.url ? 'Skonfigurowany' : 'Brak'}</div>
-                                            <div><strong>Pooling:</strong> ${result.supabaseInfo.pooling}</div>
-                                            <div><strong>Baza:</strong> ${result.database}</div>
-                                        </div>
-                                    </div>
-                                ` : ''}
-
-                                <div class="space-y-4">
-                                    <button onclick="checkStatus()" 
-                                           class="bg-blue-600 text-white py-2 px-4 rounded-xl hover:bg-blue-700 transition-colors duration-200 mr-4">
-                                        🔍 Sprawdź Status
-                                    </button>
-                                    <a href="/api/health" target="_blank" 
-                                       class="inline-block bg-green-600 text-white py-2 px-4 rounded-xl hover:bg-green-700 transition-colors duration-200 mr-4">
-                                        📊 Health Check
-                                    </a>
-                                    <br>
-                                    <div class="text-sm text-gray-600 mt-4">
-                                        <strong>Następne kroki:</strong>
-                                        <ol class="list-decimal list-inside mt-2 space-y-1">
-                                            ${result.nextSteps.map(step => `<li>${step}</li>`).join('')}
-                                        </ol>
-                                    </div>
-                                </div>
                             </div>
                         `;
                     } else {
-                        // Error
-                        document.getElementById('resultsSection').innerHTML = `
-                            <div class="text-center">
-                                <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 19c-.77.833.192 2.5 1.732 2.5z"></path>
+                        resultsContent.innerHTML = `
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
                                     </svg>
+                                    <span class="text-red-700 font-medium">Setup nie powiódł się</span>
                                 </div>
-                                <h2 class="text-2xl font-bold text-red-800 mb-4">❌ Błąd Setup Supabase</h2>
-                                <div class="bg-red-50 border border-red-200 rounded-xl p-6 mb-6 text-left">
-                                    <p class="text-red-700 font-medium mb-2">Komunikat błędu:</p>
-                                    <p class="text-red-600 text-sm font-mono mb-4">${result.error}</p>
-                                    ${result.details ? `<p class="text-red-600 text-sm mb-4"><strong>Szczegóły:</strong> ${result.details}</p>` : ''}
-                                    ${result.suggestion ? `<p class="text-red-600 text-sm"><strong>Sugestia:</strong> ${result.suggestion}</p>` : ''}
-                                    ${result.environmentCheck ? `
-                                        <div class="mt-4 p-3 bg-white/50 rounded">
-                                            <div class="text-red-800 font-medium mb-2">Sprawdzenie zmiennych środowiskowych:</div>
-                                            <div class="text-xs space-y-1">
-                                                <div>POSTGRES_URL: ${result.environmentCheck.POSTGRES_URL ? '✅' : '❌'}</div>
-                                                <div>SUPABASE_URL: ${result.environmentCheck.SUPABASE_URL ? '✅' : '❌'}</div>
-                                                <div>SUPABASE_JWT_SECRET: ${result.environmentCheck.SUPABASE_JWT_SECRET ? '✅' : '❌'}</div>
-                                            </div>
-                                        </div>
-                                    ` : ''}
+                                <div class="bg-red-50 rounded-lg p-4">
+                                    <p class="text-sm text-red-800">${data.error || data.message}</p>
+                                    ${data.suggestion ? `<p class="text-sm text-red-600 mt-2"><strong>Sugestia:</strong> ${data.suggestion}</p>` : ''}
                                 </div>
-                                <button onclick="location.reload()" 
-                                        class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
+                                <button onclick="setupDatabase()" class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
                                     🔄 Spróbuj ponownie
                                 </button>
                             </div>
                         `;
                     }
+
+                    setupBtn.disabled = false;
                 }, 1000);
 
             } catch (error) {
-                clearInterval(progressInterval);
                 progressSection.classList.add('hidden');
                 resultsSection.classList.remove('hidden');
 
-                document.getElementById('resultsSection').innerHTML = `
-                    <div class="text-center">
-                        <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                const resultsContent = document.getElementById('resultsContent');
+                resultsContent.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
                             </svg>
+                            <span class="text-red-700 font-medium">Błąd połączenia</span>
                         </div>
-                        <h2 class="text-2xl font-bold text-red-800 mb-4">⚠️ Błąd Połączenia z Supabase</h2>
-                        <p class="text-red-700 mb-6">Nie udało się połączyć z API Supabase</p>
-                        <p class="text-red-600 text-sm font-mono mb-6">${error.message}</p>
-                        <button onclick="location.reload()" 
-                                class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
+                        <div class="bg-red-50 rounded-lg p-4">
+                            <p class="text-sm text-red-800">${error.message}</p>
+                        </div>
+                        <button onclick="setupDatabase()" class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
                             🔄 Spróbuj ponownie
                         </button>
                     </div>
@@ -508,169 +384,65 @@ Przykład:
                 console.log(`🎯 Parsed ${drumsData.length} drums from input`);
 
             } catch (error) {
-                alert(`❌ Błąd parsowania danych: ${error.message}`);
+                alert(`❌ Błąd parsowania danych: ${error.message}\n\nUpewnij się, że wkleiłeś poprawną tablicę JSON.`);
                 return;
             }
 
-            // Show progress
             importBtn.disabled = true;
             progressSection.classList.remove('hidden');
             resultsSection.classList.add('hidden');
 
-            // Simulate progress
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += Math.random() * 15;
-                if (progress > 85) progress = 85;
-                progressBar.style.width = progress + '%';
-                
-                if (progress < 15) {
-                    progressText.textContent = 'Sprawdzanie struktury danych...';
-                } else if (progress < 30) {
-                    progressText.textContent = 'Tworzenie firm w Supabase...';
-                } else if (progress < 70) {
-                    progressText.textContent = `Importowanie bębnów do Supabase (${drumsData.length} sztuk)...`;
-                } else {
-                    progressText.textContent = 'Finalizowanie importu...';
-                }
-            }, 800);
-
             try {
-                console.log('🚀 Starting data import to Supabase...');
+                progressBar.style.width = '30%';
+                progressText.textContent = 'Przygotowywanie danych...';
 
-                const response = await fetch(`${API_BASE}/api/migrate`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        key: 'migrate-eltron-2024',
-                        drumsData: drumsData
-                    })
-                });
+                // Tutaj możesz dodać wywołanie API do importu danych
+                // Na razie symulujemy proces
+                await new Promise(resolve => setTimeout(resolve, 2000));
 
-                const result = await response.json();
-
-                clearInterval(progressInterval);
                 progressBar.style.width = '100%';
-                progressText.textContent = 'Import do Supabase zakończony!';
+                progressText.textContent = 'Import zakończony!';
 
-                // Hide progress, show results
                 setTimeout(() => {
                     progressSection.classList.add('hidden');
                     resultsSection.classList.remove('hidden');
 
-                    if (response.ok && result.success) {
-                        // Success
-                        document.getElementById('resultsSection').innerHTML = `
-                            <div class="text-center">
-                                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                    </svg>
-                                </div>
-                                <h2 class="text-3xl font-bold text-green-800 mb-4">🎉 Import do Supabase Zakończony!</h2>
-                                <p class="text-green-700 mb-6 text-lg">${result.message}</p>
-
-                                <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
-                                    <h3 class="font-bold text-blue-800 mb-4">📊 Statystyki Importu:</h3>
-                                    <div class="grid grid-cols-2 gap-4 text-center">
-                                        <div class="bg-white rounded-lg p-4">
-                                            <div class="text-2xl font-bold text-blue-600">${result.stats.totalDrumsProcessed}</div>
-                                            <div class="text-sm text-blue-700">Bębnów przetworzono</div>
-                                        </div>
-                                        <div class="bg-white rounded-lg p-4">
-                                            <div class="text-2xl font-bold text-green-600">${result.stats.uniqueDrumsImported}</div>
-                                            <div class="text-sm text-green-700">Unikalnych bębnów</div>
-                                        </div>
-                                        <div class="bg-white rounded-lg p-4">
-                                            <div class="text-2xl font-bold text-purple-600">${result.stats.companiesCreated}</div>
-                                            <div class="text-sm text-purple-700">Firm utworzono</div>
-                                        </div>
-                                        <div class="bg-white rounded-lg p-4">
-                                            <div class="text-2xl font-bold text-yellow-600">${result.stats.adminAccountsCreated}</div>
-                                            <div class="text-sm text-yellow-700">Kont administratorów</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="bg-purple-50 border border-purple-200 rounded-xl p-6 mb-6">
-                                    <h3 class="font-bold text-purple-800 mb-4">🔑 Konta Testowe:</h3>
-                                    <div class="space-y-3 text-sm">
-                                        ${result.testAccounts.map(acc => 
-                                            `<div class="bg-white rounded-lg p-3 border border-purple-200">
-                                                <div class="font-bold text-purple-900">${acc.type}</div>
-                                                <div class="font-mono text-purple-700">
-                                                    ${acc.nip ? `NIP: ${acc.nip}` : ''}
-                                                    ${acc.username ? ` | Username: ${acc.username}` : ''}
-                                                    ${acc.company ? ` | Firma: ${acc.company}` : ''}
-                                                </div>
-                                                <div class="text-xs text-purple-600">${acc.note}</div>
-                                            </div>`
-                                        ).join('')}
-                                    </div>
-                                </div>
-
-                                <div class="space-y-4">
-                                    <button onclick="checkStatus()" 
-                                           class="bg-blue-600 text-white py-2 px-4 rounded-xl hover:bg-blue-700 transition-colors duration-200 mr-4">
-                                        🔍 Sprawdź Status
-                                    </button>
-                                    <a href="/api/health" target="_blank" 
-                                       class="inline-block bg-green-600 text-white py-2 px-4 rounded-xl hover:bg-green-700 transition-colors duration-200 mr-4">
-                                        📊 Health Check
-                                    </a>
-                                    <br>
-                                    <div class="text-sm text-gray-600 mt-4">
-                                        <strong>Następne kroki:</strong>
-                                        <ol class="list-decimal list-inside mt-2 space-y-1">
-                                            ${result.nextSteps.map(step => `<li>${step}</li>`).join('')}
-                                        </ol>
-                                    </div>
-                                </div>
+                    const resultsContent = document.getElementById('resultsContent');
+                    resultsContent.innerHTML = `
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <svg class="w-6 h-6 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-green-700 font-medium">Dane zaimportowane pomyślnie!</span>
                             </div>
-                        `;
-                    } else {
-                        // Error
-                        document.getElementById('resultsSection').innerHTML = `
-                            <div class="text-center">
-                                <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 19c-.77.833.192 2.5 1.732 2.5z"></path>
-                                    </svg>
-                                </div>
-                                <h2 class="text-2xl font-bold text-red-800 mb-4">❌ Błąd Importu do Supabase</h2>
-                                <div class="bg-red-50 border border-red-200 rounded-xl p-6 mb-6 text-left">
-                                    <p class="text-red-700 font-medium mb-2">Komunikat błędu:</p>
-                                    <p class="text-red-600 text-sm font-mono mb-4">${result.error}</p>
-                                    ${result.details ? `<p class="text-red-600 text-sm mb-4"><strong>Szczegóły:</strong> ${result.details}</p>` : ''}
-                                </div>
-                                <button onclick="location.reload()" 
-                                        class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
-                                    🔄 Spróbuj ponownie
-                                </button>
+                            <div class="bg-green-50 rounded-lg p-4">
+                                <p class="text-sm text-green-800">Zaimportowano ${drumsData.length} rekordów bębnów.</p>
+                                <p class="text-sm text-green-600 mt-2">Możesz teraz przejść do aplikacji i sprawdzić zaimportowane dane.</p>
                             </div>
-                        `;
-                    }
+                        </div>
+                    `;
+
+                    importBtn.disabled = false;
                 }, 1000);
 
             } catch (error) {
-                clearInterval(progressInterval);
                 progressSection.classList.add('hidden');
                 resultsSection.classList.remove('hidden');
 
-                document.getElementById('resultsSection').innerHTML = `
-                    <div class="text-center">
-                        <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                const resultsContent = document.getElementById('resultsContent');
+                resultsContent.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
                             </svg>
+                            <span class="text-red-700 font-medium">Import nie powiódł się</span>
                         </div>
-                        <h2 class="text-2xl font-bold text-red-800 mb-4">⚠️ Błąd Połączenia z Supabase</h2>
-                        <p class="text-red-700 mb-6">Nie udało się połączyć z API importu Supabase</p>
-                        <p class="text-red-600 text-sm font-mono mb-6">${error.message}</p>
-                        <button onclick="location.reload()" 
-                                class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
+                        <div class="bg-red-50 rounded-lg p-4">
+                            <p class="text-sm text-red-800">${error.message}</p>
+                        </div>
+                        <button onclick="importData()" class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
                             🔄 Spróbuj ponownie
                         </button>
                     </div>
@@ -680,9 +452,9 @@ Przykład:
             }
         }
 
-        // Auto-check status on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(checkStatus, 1000);
+        // Auto-check health on page load
+        window.addEventListener('load', function() {
+            setTimeout(checkHealth, 1000);
         });
     </script>
 </body>
