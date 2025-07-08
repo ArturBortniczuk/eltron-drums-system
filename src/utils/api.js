@@ -1,9 +1,9 @@
-// src/utils/api.js - NAPRAWIONA WERSJA (WSZYSTKIE IMPORTY NA GÓRZE)
+// src/utils/api.js - ZAKTUALIZOWANY DLA SUPABASE
 import { mockDrumsData } from '../data/mockData';
 import { mockCompanies, mockReturnRequests } from '../data/additionalData';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '';
-const USE_MOCK_DATA = process.env.REACT_APP_USE_MOCK_DATA === 'true' || !API_BASE_URL;
+const USE_MOCK_DATA = process.env.REACT_APP_USE_MOCK_DATA === 'true' || false;
 
 // Connection helpers
 export const connectionHelpers = {
@@ -96,8 +96,8 @@ const makeRequest = async (url, options = {}) => {
     const response = await fetch(`${API_BASE_URL}${url}`, config);
     
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Network error' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
+      const error = await response.json().catch(() => ({ message: 'Network error' }));
+      throw new Error(error.message || `HTTP ${response.status}`);
     }
 
     return response.json();
@@ -129,36 +129,76 @@ export const authAPI = {
       return { success: true, user: mockUser };
     }
     
-    return makeRequest('/api/auth/login', {
+    const response = await makeRequest('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ nip, password, role }),
     });
+
+    if (response.success) {
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('currentUser', JSON.stringify(response.user));
+    }
+
+    return response;
+  },
+
+  async register(nip, password, confirmPassword, role = 'client') {
+    if (USE_MOCK_DATA) {
+      // Mock register logic
+      const mockUser = {
+        nip,
+        role,
+        companyName: `Firma ${nip.slice(-3)}`,
+        fullName: `FIRMA ${nip.slice(-3)} SP. Z O.O.`
+      };
+      
+      localStorage.setItem('authToken', 'mock-token-' + Date.now());
+      localStorage.setItem('currentUser', JSON.stringify(mockUser));
+      
+      return { success: true, user: mockUser };
+    }
+    
+    const response = await makeRequest('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ nip, password, confirmPassword, role }),
+    });
+
+    if (response.success) {
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('currentUser', JSON.stringify(response.user));
+    }
+
+    return response;
   },
 
   async checkNip(nip, role = 'client') {
     if (USE_MOCK_DATA) {
       return { 
         exists: nip.length >= 8, 
-        isFirstLogin: Math.random() > 0.5,
-        companyName: `Firma ${nip.slice(-3)}`
+        firstLogin: Math.random() > 0.5,
+        company: { name: `Firma ${nip.slice(-3)}` }
       };
     }
     
-    return makeRequest('/api/auth/check-nip', {
-      method: 'POST',
-      body: JSON.stringify({ nip, role }),
-    });
-  },
-
-  async setPassword(nip, password, role = 'client') {
-    if (USE_MOCK_DATA) {
-      return { success: true };
+    // First try to login with empty password to check if user exists and if it's first login
+    try {
+      const response = await makeRequest('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ nip, password: '', role }),
+      });
+      
+      return response;
+    } catch (error) {
+      // If error contains info about password requirement, user exists but needs password
+      if (error.message.includes('password') || error.message.includes('Invalid password')) {
+        return { 
+          exists: true, 
+          firstLogin: false,
+          company: { name: 'Użytkownik znaleziony' }
+        };
+      }
+      throw error;
     }
-    
-    return makeRequest('/api/auth/set-password', {
-      method: 'POST',
-      body: JSON.stringify({ nip, password, role }),
-    });
   },
 
   logout() {
@@ -318,5 +358,6 @@ export const apiConfig = {
   baseUrl: API_BASE_URL,
   useMockData: USE_MOCK_DATA,
   isOnline: connectionHelpers.isOnline(),
-  isAuthenticated: isAuthenticated()
+  isAuthenticated: isAuthenticated(),
+  supabaseEnabled: !!process.env.REACT_APP_SUPABASE_URL
 };

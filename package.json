@@ -15,10 +15,11 @@
   "homepage": ".",
   "scripts": {
     "start": "react-scripts start",
-    "build": "node migrate.js && react-scripts build",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "migrate": "node migrate.js"
+    "migrate": "node migrate.js",
+    "dev": "react-scripts start"
   },
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
@@ -77,6 +78,8 @@
     "management",
     "system",
     "eltron",
-    "logistics"
+    "logistics",
+    "supabase",
+    "postgresql"
   ]
 }

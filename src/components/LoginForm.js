@@ -1,4 +1,4 @@
-// src/components/LoginForm.js - ZOPTYMALIZOWANA WERSJA
+// src/components/LoginForm.js - ZAKTUALIZOWANY DLA SUPABASE
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Building2, Shield, CheckCircle, ArrowRight, UserCheck, Wifi, WifiOff } from 'lucide-react';
 import { authAPI, handleAPIError, connectionHelpers } from '../utils/api';
@@ -51,37 +51,36 @@ const LoginForm = ({ onLogin }) => {
     setError('');
     
     try {
-      // Check if this is first login by attempting login with empty password
+      // Try to login with empty password to check user status
       const response = await authAPI.login(nip, '', loginMode);
       
       if (response.firstLogin) {
         setIsFirstLogin(true);
-        setCompanyFound(response.company || { name: 'Administrator' });
-      } else {
-        // User exists and has password set
-        setIsFirstLogin(false);
-        setCompanyFound(response.company || { name: 'Administrator' });
+        setCompanyFound(response.user || { name: 'Administrator' });
+      } else if (response.success) {
+        // User logged in successfully (shouldn't happen with empty password)
+        onLogin(response.user);
+        return;
       }
       
     } catch (error) {
-      // If login fails, it might be because password is required
-      // Try to determine if user exists but needs password
-      if (error.message.includes('Invalid password') || error.message.includes('Password required')) {
+      // If login fails, check the error message to determine user status
+      const errorMessage = error.message.toLowerCase();
+      
+      if (errorMessage.includes('password') || errorMessage.includes('invalid password')) {
+        // User exists but needs proper password
         setIsFirstLogin(false);
-        setCompanyFound({ name: 'Użytkownik znaleziony' });
-      } else {
-        const errorMessage = handleAPIError(error, setError);
-        
-        // Provide helpful error messages
-        if (errorMessage.includes('not found')) {
-          if (loginMode === 'admin') {
-            setError('Nie znaleziono konta administratora dla podanego NIP');
-          } else {
-            setError('Nie znaleziono konta dla podanego NIP. Sprawdź czy numer jest prawidłowy.');
-          }
-        } else if (!isOnline) {
-          setError('Brak połączenia z internetem. Sprawdź połączenie i spróbuj ponownie.');
+        setCompanyFound({ name: loginMode === 'admin' ? 'Administrator' : 'Użytkownik znaleziony' });
+      } else if (errorMessage.includes('not found')) {
+        if (loginMode === 'admin') {
+          setError('Nie znaleziono konta administratora dla podanego NIP');
+        } else {
+          setError('Nie znaleziono konta dla podanego NIP. Sprawdź czy numer jest prawidłowy.');
         }
+      } else if (!isOnline) {
+        setError('Brak połączenia z internetem. Sprawdź połączenie i spróbuj ponownie.');
+      } else {
+        setError('Wystąpił błąd podczas sprawdzania konta: ' + error.message);
       }
     } finally {
       setLoading(false);
@@ -122,7 +121,7 @@ const LoginForm = ({ onLogin }) => {
       }
 
       // Login successful
-      if (response.user) {
+      if (response.success && response.user) {
         onLogin(response.user);
       } else {
         setError('Nieoczekiwana odpowiedź serwera');
@@ -132,7 +131,7 @@ const LoginForm = ({ onLogin }) => {
       const errorMessage = handleAPIError(error, setError);
       
       // Provide specific error messages
-      if (errorMessage.includes('Invalid credentials') || errorMessage.includes('Invalid password')) {
+      if (errorMessage.includes('Invalid password') || errorMessage.includes('password')) {
         setError('Nieprawidłowe hasło. Spróbuj ponownie.');
       } else if (errorMessage.includes('Passwords do not match')) {
         setError('Hasła nie są identyczne');
@@ -206,6 +205,12 @@ const LoginForm = ({ onLogin }) => {
               {isOnline ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
               <span>{isOnline ? 'Online' : 'Offline'}</span>
             </div>
+          </div>
+          <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-xs bg-green-100 text-green-800">
+            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
+            </svg>
+            Powered by Supabase
           </div>
         </div>
 
@@ -304,15 +309,15 @@ const LoginForm = ({ onLogin }) => {
                 {/* Quick Login Hints */}
                 {loginMode === 'admin' && (
                   <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                    <p className="text-xs text-purple-700 mb-1">💡 Dane testowe administratora:</p>
+                    <p className="text-xs text-purple-700 mb-1">💡 Dane testowe administratora (Supabase):</p>
                     <p className="text-xs text-purple-600">NIP: <strong>0000000000</strong> (admin) lub <strong>1111111111</strong> (supervisor)</p>
                   </div>
                 )}
 
                 {loginMode === 'client' && (
                   <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-xs text-blue-700 mb-1">💡 Przykładowe NIP-y klientów:</p>
-                    <p className="text-xs text-blue-600"><strong>1234567890</strong>, <strong>9876543210</strong>, <strong>5555666677</strong></p>
+                    <p className="text-xs text-blue-700 mb-1">💡 Przykładowe NIP-y klientów (Supabase):</p>
+                    <p className="text-xs text-blue-600"><strong>8513255117</strong>, <strong>6792693162</strong>, <strong>1234567890</strong></p>
                   </div>
                 )}
 
@@ -355,7 +360,7 @@ const LoginForm = ({ onLogin }) => {
                       🎉 Pierwsze logowanie!
                     </h3>
                     <p className="text-sm text-gray-600">
-                      Ustaw bezpieczne hasło dla swojego konta
+                      Ustaw bezpieczne hasło dla swojego konta w Supabase
                     </p>
                     {companyFound.name && (
                       <p className="text-xs text-gray-500 mt-1">
@@ -520,7 +525,9 @@ const LoginForm = ({ onLogin }) => {
         {/* Footer */}
         <div className="text-center text-sm text-gray-500">
           <p>© 2025 Grupa Eltron. Wszystkie prawa zastrzeżone.</p>
-          <p className="text-xs mt-1">Wersja: 1.0.0 | Status API: {isOnline ? 'Połączono' : 'Rozłączono'}</p>
+          <p className="text-xs mt-1">
+            Wersja: 2.0.0 | Baza danych: Supabase | Status API: {isOnline ? 'Połączono' : 'Rozłączono'}
+          </p>
         </div>
       </div>
     </div>

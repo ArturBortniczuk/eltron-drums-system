@@ -3,22 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eltron - Setup Bazy Danych</title>
+    <title>Eltron - Setup Bazy Danych Supabase</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen p-4">
-    <div class="max-w-3xl mx-auto">
+    <div class="max-w-4xl mx-auto">
         
         <!-- Header -->
         <div class="bg-white rounded-2xl shadow-2xl p-8 mb-6">
             <div class="text-center">
-                <div class="w-16 h-16 bg-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <div class="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 1.79 4 4 4h8c0-2.21-1.79-4-4-4H8c-2.21 0-4-1.79-4-4zm16-3a2 2 0 00-2-2h-6a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V4z"></path>
                     </svg>
                 </div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Setup Bazy Danych</h1>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Setup Bazy Danych Supabase</h1>
                 <p class="text-gray-600">Stwórz wszystkie tabele automatycznie przez API</p>
+                <div class="mt-4 inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    Powered by Supabase PostgreSQL
+                </div>
             </div>
         </div>
 
@@ -55,7 +61,7 @@
 
         <!-- Current Status -->
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">🔍 Sprawdź aktualny stan bazy</h2>
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">🔍 Sprawdź aktualny stan bazy Supabase</h2>
             <button 
                 onclick="checkStatus()" 
                 id="statusBtn"
@@ -69,7 +75,7 @@
         <!-- Setup Section -->
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">🚀 Uruchom Setup Bazy Danych</h2>
-            <p class="text-gray-600 mb-6">Kliknij przycisk żeby automatycznie stworzyć wszystkie tabele i administratorów.</p>
+            <p class="text-gray-600 mb-6">Kliknij przycisk żeby automatycznie stworzyć wszystkie tabele i administratorów w Supabase.</p>
             
             <button 
                 onclick="setupDatabase()" 
@@ -80,14 +86,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
-                <span>Setup Bazy Danych</span>
+                <span>Setup Bazy Supabase</span>
             </button>
         </div>
 
         <!-- Import Data Section -->
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">📦 Import Danych z mockData.js</h2>
-            <p class="text-gray-600 mb-4">Wklej tutaj zawartość pliku mockData.js żeby zaimportować swoje bębny do bazy danych.</p>
+            <p class="text-gray-600 mb-4">Wklej tutaj zawartość pliku mockData.js żeby zaimportować swoje bębny do bazy danych Supabase.</p>
             
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -106,6 +112,8 @@ Przykład:
     "NAZWA": "Przykładowy bęben",
     "NIP": "1234567890",
     "PELNA_NAZWA_KONTRAHENTA": "Firma ABC",
+    "DATA_ZWROTU_DO_DOSTAWCY": "2025-12-31",
+    "Data przyjęcia na stan": "2024-01-15",
     ...
   }
 ]'
@@ -120,7 +128,7 @@ Przykład:
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
                 </svg>
-                <span>Import Danych</span>
+                <span>Import Danych do Supabase</span>
             </button>
         </div>
 
@@ -133,16 +141,46 @@ Przykład:
             <div class="bg-gray-200 rounded-full h-2 mb-4">
                 <div id="progressBar" class="bg-purple-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
             </div>
-            <div id="progressText" class="text-sm text-gray-600">Łączenie z bazą danych...</div>
+            <div id="progressText" class="text-sm text-gray-600">Łączenie z bazą danych Supabase...</div>
         </div>
 
         <!-- Results -->
         <div id="resultsSection" class="hidden bg-white rounded-2xl shadow-xl p-6"></div>
 
+        <!-- Supabase Info -->
+        <div class="bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">ℹ️ Informacje o Supabase</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <span class="font-medium text-gray-700">Baza danych:</span>
+                    <span class="ml-2 text-gray-600">PostgreSQL na Supabase</span>
+                </div>
+                <div>
+                    <span class="font-medium text-gray-700">Połączenie:</span>
+                    <span class="ml-2 text-gray-600">Szyfrowane (SSL)</span>
+                </div>
+                <div>
+                    <span class="font-medium text-gray-700">Pooling:</span>
+                    <span class="ml-2 text-gray-600">Włączony (pgBouncer)</span>
+                </div>
+                <div>
+                    <span class="font-medium text-gray-700">Backup:</span>
+                    <span class="ml-2 text-gray-600">Automatyczny (Supabase)</span>
+                </div>
+            </div>
+            <div class="mt-4 p-3 bg-white/50 rounded-lg">
+                <p class="text-xs text-gray-600">
+                    <strong>Uwaga:</strong> Ta aplikacja używa Supabase jako backend bazy danych. 
+                    Wszystkie dane są bezpiecznie przechowywane w chmurze z automatycznymi backupami.
+                </p>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        const API_BASE = 'https://eltron-drums-system.vercel.app';
+        const API_BASE = window.location.origin;
+        
         // Check current database status
         async function checkStatus() {
             const statusBtn = document.getElementById('statusBtn');
@@ -150,7 +188,7 @@ Przykład:
             
             statusBtn.disabled = true;
             statusBtn.textContent = 'Sprawdzanie...';
-            statusResult.innerHTML = '<div class="text-blue-600">Sprawdzanie stanu bazy danych...</div>';
+            statusResult.innerHTML = '<div class="text-blue-600">Sprawdzanie stanu bazy danych Supabase...</div>';
 
             try {
                 const response = await fetch(`${API_BASE}/api/health`);
@@ -162,31 +200,55 @@ Przykład:
                     statusResult.innerHTML = `
                         <div class="border rounded-lg p-4 ${isSetup ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}">
                             <div class="font-medium ${isSetup ? 'text-green-800' : 'text-yellow-800'} mb-2">
-                                ${isSetup ? '✅ Baza jest skonfigurowana' : '⚠️ Baza wymaga setup'}
+                                ${isSetup ? '✅ Baza Supabase jest skonfigurowana' : '⚠️ Baza Supabase wymaga setup'}
                             </div>
                             <div class="text-sm ${isSetup ? 'text-green-700' : 'text-yellow-700'} space-y-1">
-                                <div>Firmy: ${data.database?.tables?.companies || 0}</div>
-                                <div>Bębny: ${data.database?.tables?.drums || 0}</div>
-                                <div>Administratorzy: ${data.database?.tables?.admin_users || 0}</div>
-                                <div>Użytkownicy: ${data.database?.tables?.client_users || 0}</div>
+                                <div>Status: ${data.status}</div>
+                                <div>Typ bazy: ${data.database?.type || 'Supabase PostgreSQL'}</div>
+                                <div>Połączenie: ${data.database?.connection}</div>
+                                ${data.database?.tables ? `
+                                    <div class="mt-2 pt-2 border-t border-current border-opacity-20">
+                                        <div>Firmy: ${data.database.tables.companies || 0}</div>
+                                        <div>Bębny: ${data.database.tables.drums || 0}</div>
+                                        <div>Administratorzy: ${data.database.tables.admin_users || 0}</div>
+                                        <div>Użytkownicy: ${data.database.tables.users || 0}</div>
+                                    </div>
+                                ` : ''}
                                 <div class="text-xs mt-2">${data.message}</div>
                             </div>
+                            ${data.database?.supabase ? `
+                                <div class="mt-3 p-2 bg-white/50 rounded text-xs">
+                                    <div><strong>Konfiguracja Supabase:</strong></div>
+                                    <div>URL: ${data.database.supabase.url === 'configured' ? '✅' : '❌'}</div>
+                                    <div>JWT Secret: ${data.database.supabase.jwtSecret === 'configured' ? '✅' : '❌'}</div>
+                                    <div>Pooling: ${data.database.supabase.poolingEnabled ? '✅ Włączony' : '❌ Wyłączony'}</div>
+                                </div>
+                            ` : ''}
                         </div>
                     `;
                 } else {
                     statusResult.innerHTML = `
                         <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <div class="text-red-800 font-medium">❌ Problem z bazą danych</div>
-                            <div class="text-red-700 text-sm mt-2">${data.error?.message || 'Nieznany błąd'}</div>
-                            <div class="text-red-600 text-xs mt-1">${data.error?.suggestion || 'Sprawdź konfigurację'}</div>
+                            <div class="text-red-800 font-medium">❌ Problem z bazą danych Supabase</div>
+                            <div class="text-red-700 text-sm mt-2">${data.error?.message || data.message || 'Nieznany błąd'}</div>
+                            <div class="text-red-600 text-xs mt-1">${data.error?.suggestion || 'Sprawdź konfigurację Supabase'}</div>
+                            ${data.environmentCheck ? `
+                                <div class="mt-3 p-2 bg-white/50 rounded text-xs">
+                                    <div><strong>Sprawdzenie zmiennych:</strong></div>
+                                    <div>POSTGRES_URL: ${data.environmentCheck.POSTGRES_URL ? '✅' : '❌'}</div>
+                                    <div>SUPABASE_URL: ${data.environmentCheck.SUPABASE_URL ? '✅' : '❌'}</div>
+                                    <div>SUPABASE_JWT_SECRET: ${data.environmentCheck.SUPABASE_JWT_SECRET ? '✅' : '❌'}</div>
+                                </div>
+                            ` : ''}
                         </div>
                     `;
                 }
             } catch (error) {
                 statusResult.innerHTML = `
                     <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div class="text-red-800 font-medium">❌ Błąd połączenia</div>
+                        <div class="text-red-800 font-medium">❌ Błąd połączenia z Supabase</div>
                         <div class="text-red-700 text-sm mt-2">${error.message}</div>
+                        <div class="text-red-600 text-xs mt-1">Sprawdź czy aplikacja jest wdrożona i Supabase jest dostępny</div>
                     </div>
                 `;
             }
@@ -216,7 +278,7 @@ Przykład:
                 progressBar.style.width = progress + '%';
                 
                 if (progress < 20) {
-                    progressText.textContent = 'Testowanie połączenia z bazą...';
+                    progressText.textContent = 'Testowanie połączenia z Supabase...';
                 } else if (progress < 40) {
                     progressText.textContent = 'Tworzenie tabeli companies...';
                 } else if (progress < 60) {
@@ -227,7 +289,7 @@ Przykład:
             }, 600);
 
             try {
-                console.log('🚀 Starting database setup...');
+                console.log('🚀 Starting Supabase database setup...');
 
                 const response = await fetch(`${API_BASE}/api/setup-database`, {
                     method: 'POST',
@@ -243,7 +305,7 @@ Przykład:
 
                 clearInterval(progressInterval);
                 progressBar.style.width = '100%';
-                progressText.textContent = 'Setup zakończony!';
+                progressText.textContent = 'Setup Supabase zakończony!';
 
                 // Hide progress, show results
                 setTimeout(() => {
@@ -259,7 +321,7 @@ Przykład:
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                     </svg>
                                 </div>
-                                <h2 class="text-3xl font-bold text-green-800 mb-4">🎉 Setup Zakończony!</h2>
+                                <h2 class="text-3xl font-bold text-green-800 mb-4">🎉 Setup Supabase Zakończony!</h2>
                                 <p class="text-green-700 mb-6 text-lg">${result.message}</p>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -318,6 +380,17 @@ Przykład:
                                     </div>
                                 </div>
 
+                                ${result.supabaseInfo ? `
+                                    <div class="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
+                                        <h3 class="font-bold text-green-800 mb-4">🗄️ Informacje o Supabase:</h3>
+                                        <div class="text-sm text-green-700 space-y-1">
+                                            <div><strong>URL:</strong> ${result.supabaseInfo.url ? 'Skonfigurowany' : 'Brak'}</div>
+                                            <div><strong>Pooling:</strong> ${result.supabaseInfo.pooling}</div>
+                                            <div><strong>Baza:</strong> ${result.database}</div>
+                                        </div>
+                                    </div>
+                                ` : ''}
+
                                 <div class="space-y-4">
                                     <button onclick="checkStatus()" 
                                            class="bg-blue-600 text-white py-2 px-4 rounded-xl hover:bg-blue-700 transition-colors duration-200 mr-4">
@@ -346,12 +419,22 @@ Przykład:
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 19c-.77.833.192 2.5 1.732 2.5z"></path>
                                     </svg>
                                 </div>
-                                <h2 class="text-2xl font-bold text-red-800 mb-4">❌ Błąd Setup</h2>
+                                <h2 class="text-2xl font-bold text-red-800 mb-4">❌ Błąd Setup Supabase</h2>
                                 <div class="bg-red-50 border border-red-200 rounded-xl p-6 mb-6 text-left">
                                     <p class="text-red-700 font-medium mb-2">Komunikat błędu:</p>
                                     <p class="text-red-600 text-sm font-mono mb-4">${result.error}</p>
                                     ${result.details ? `<p class="text-red-600 text-sm mb-4"><strong>Szczegóły:</strong> ${result.details}</p>` : ''}
                                     ${result.suggestion ? `<p class="text-red-600 text-sm"><strong>Sugestia:</strong> ${result.suggestion}</p>` : ''}
+                                    ${result.environmentCheck ? `
+                                        <div class="mt-4 p-3 bg-white/50 rounded">
+                                            <div class="text-red-800 font-medium mb-2">Sprawdzenie zmiennych środowiskowych:</div>
+                                            <div class="text-xs space-y-1">
+                                                <div>POSTGRES_URL: ${result.environmentCheck.POSTGRES_URL ? '✅' : '❌'}</div>
+                                                <div>SUPABASE_URL: ${result.environmentCheck.SUPABASE_URL ? '✅' : '❌'}</div>
+                                                <div>SUPABASE_JWT_SECRET: ${result.environmentCheck.SUPABASE_JWT_SECRET ? '✅' : '❌'}</div>
+                                            </div>
+                                        </div>
+                                    ` : ''}
                                 </div>
                                 <button onclick="location.reload()" 
                                         class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
@@ -374,8 +457,8 @@ Przykład:
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                             </svg>
                         </div>
-                        <h2 class="text-2xl font-bold text-red-800 mb-4">⚠️ Błąd Połączenia</h2>
-                        <p class="text-red-700 mb-6">Nie udało się połączyć z API</p>
+                        <h2 class="text-2xl font-bold text-red-800 mb-4">⚠️ Błąd Połączenia z Supabase</h2>
+                        <p class="text-red-700 mb-6">Nie udało się połączyć z API Supabase</p>
                         <p class="text-red-600 text-sm font-mono mb-6">${error.message}</p>
                         <button onclick="location.reload()" 
                                 class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
@@ -444,16 +527,16 @@ Przykład:
                 if (progress < 15) {
                     progressText.textContent = 'Sprawdzanie struktury danych...';
                 } else if (progress < 30) {
-                    progressText.textContent = 'Tworzenie firm...';
+                    progressText.textContent = 'Tworzenie firm w Supabase...';
                 } else if (progress < 70) {
-                    progressText.textContent = `Importowanie bębnów (${drumsData.length} sztuk)...`;
+                    progressText.textContent = `Importowanie bębnów do Supabase (${drumsData.length} sztuk)...`;
                 } else {
                     progressText.textContent = 'Finalizowanie importu...';
                 }
             }, 800);
 
             try {
-                console.log('🚀 Starting data import...');
+                console.log('🚀 Starting data import to Supabase...');
 
                 const response = await fetch(`${API_BASE}/api/migrate`, {
                     method: 'POST',
@@ -470,7 +553,7 @@ Przykład:
 
                 clearInterval(progressInterval);
                 progressBar.style.width = '100%';
-                progressText.textContent = 'Import zakończony!';
+                progressText.textContent = 'Import do Supabase zakończony!';
 
                 // Hide progress, show results
                 setTimeout(() => {
@@ -486,7 +569,7 @@ Przykład:
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                     </svg>
                                 </div>
-                                <h2 class="text-3xl font-bold text-green-800 mb-4">🎉 Import Zakończony!</h2>
+                                <h2 class="text-3xl font-bold text-green-800 mb-4">🎉 Import do Supabase Zakończony!</h2>
                                 <p class="text-green-700 mb-6 text-lg">${result.message}</p>
 
                                 <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
@@ -517,7 +600,11 @@ Przykład:
                                         ${result.testAccounts.map(acc => 
                                             `<div class="bg-white rounded-lg p-3 border border-purple-200">
                                                 <div class="font-bold text-purple-900">${acc.type}</div>
-                                                <div class="font-mono text-purple-700">NIP: ${acc.nip}</div>
+                                                <div class="font-mono text-purple-700">
+                                                    ${acc.nip ? `NIP: ${acc.nip}` : ''}
+                                                    ${acc.username ? ` | Username: ${acc.username}` : ''}
+                                                    ${acc.company ? ` | Firma: ${acc.company}` : ''}
+                                                </div>
                                                 <div class="text-xs text-purple-600">${acc.note}</div>
                                             </div>`
                                         ).join('')}
@@ -552,7 +639,7 @@ Przykład:
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 19c-.77.833.192 2.5 1.732 2.5z"></path>
                                     </svg>
                                 </div>
-                                <h2 class="text-2xl font-bold text-red-800 mb-4">❌ Błąd Importu</h2>
+                                <h2 class="text-2xl font-bold text-red-800 mb-4">❌ Błąd Importu do Supabase</h2>
                                 <div class="bg-red-50 border border-red-200 rounded-xl p-6 mb-6 text-left">
                                     <p class="text-red-700 font-medium mb-2">Komunikat błędu:</p>
                                     <p class="text-red-600 text-sm font-mono mb-4">${result.error}</p>
@@ -579,8 +666,8 @@ Przykład:
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                             </svg>
                         </div>
-                        <h2 class="text-2xl font-bold text-red-800 mb-4">⚠️ Błąd Połączenia</h2>
-                        <p class="text-red-700 mb-6">Nie udało się połączyć z API</p>
+                        <h2 class="text-2xl font-bold text-red-800 mb-4">⚠️ Błąd Połączenia z Supabase</h2>
+                        <p class="text-red-700 mb-6">Nie udało się połączyć z API importu Supabase</p>
                         <p class="text-red-600 text-sm font-mono mb-6">${error.message}</p>
                         <button onclick="location.reload()" 
                                 class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">

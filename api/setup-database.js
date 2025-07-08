@@ -1,4 +1,4 @@
-// api/setup-database.js - Automatyczne tworzenie tabel i setup bazy
+// api/setup-database.js - Automatyczne tworzenie tabel i setup bazy dla Supabase
 const { sql } = require('@vercel/postgres');
 
 module.exports = async (req, res) => {
@@ -26,17 +26,17 @@ module.exports = async (req, res) => {
       return res.status(401).json({ error: 'Invalid setup key' });
     }
 
-    console.log('🚀 Starting database setup...');
+    console.log('🚀 Starting database setup for Supabase...');
 
-    // Test połączenia
+    // Test połączenia z Supabase
     try {
       await sql`SELECT 1 as test`;
-      console.log('✅ Database connection successful');
+      console.log('✅ Supabase database connection successful');
     } catch (error) {
       return res.status(500).json({
-        error: 'Database connection failed',
+        error: 'Supabase database connection failed',
         details: error.message,
-        suggestion: 'Check DATABASE_URL environment variable'
+        suggestion: 'Check POSTGRES_URL environment variable and Supabase configuration'
       });
     }
 
@@ -48,21 +48,21 @@ module.exports = async (req, res) => {
     };
 
     // ========== TWORZENIE TABEL ==========
-    console.log('📊 Creating tables...');
+    console.log('📊 Creating tables for Supabase...');
 
     // 1. Tabela companies
     try {
       await sql`
         CREATE TABLE IF NOT EXISTS companies (
           id SERIAL PRIMARY KEY,
-          nip VARCHAR(10) UNIQUE NOT NULL,
-          name TEXT NOT NULL,
+          nip VARCHAR(20) UNIQUE NOT NULL,
+          name VARCHAR(255) NOT NULL,
           email VARCHAR(255),
-          phone VARCHAR(20),
+          phone VARCHAR(50),
           address TEXT,
-          status VARCHAR(20) DEFAULT 'Aktywny',
-          last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          status VARCHAR(50) DEFAULT 'Aktywny',
+          last_activity TIMESTAMPTZ DEFAULT NOW(),
+          created_at TIMESTAMPTZ DEFAULT NOW()
         )
       `;
       results.tablesCreated.push('companies');
@@ -77,20 +77,20 @@ module.exports = async (req, res) => {
       await sql`
         CREATE TABLE IF NOT EXISTS drums (
           id SERIAL PRIMARY KEY,
-          kod_bebna VARCHAR(50) UNIQUE NOT NULL,
-          nazwa TEXT NOT NULL,
+          kod_bebna VARCHAR(255) UNIQUE NOT NULL,
+          nazwa VARCHAR(255),
           cecha TEXT,
           data_zwrotu_do_dostawcy DATE,
           kon_dostawca TEXT,
           pelna_nazwa_kontrahenta TEXT,
-          nip VARCHAR(10) REFERENCES companies(nip),
+          nip VARCHAR(20) REFERENCES companies(nip),
           typ_dok VARCHAR(50),
           nr_dokumentupz VARCHAR(100),
           data_przyjecia_na_stan DATE,
           kontrahent TEXT,
           status VARCHAR(20) DEFAULT 'Aktywny',
           data_wydania DATE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          created_at TIMESTAMPTZ DEFAULT NOW()
         )
       `;
       results.tablesCreated.push('drums');
@@ -105,11 +105,12 @@ module.exports = async (req, res) => {
       await sql`
         CREATE TABLE IF NOT EXISTS users (
           id SERIAL PRIMARY KEY,
-          nip VARCHAR(10) UNIQUE NOT NULL REFERENCES companies(nip),
-          password_hash TEXT NOT NULL,
-          is_first_login BOOLEAN DEFAULT true,
-          last_login TIMESTAMP,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          nip VARCHAR(20) UNIQUE NOT NULL REFERENCES companies(nip),
+          password_hash VARCHAR(255) NOT NULL,
+          is_first_login BOOLEAN DEFAULT TRUE,
+          last_login TIMESTAMPTZ,
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          company VARCHAR(255)
         )
       `;
       results.tablesCreated.push('users');
@@ -124,7 +125,7 @@ module.exports = async (req, res) => {
       await sql`
         CREATE TABLE IF NOT EXISTS return_requests (
           id SERIAL PRIMARY KEY,
-          user_nip VARCHAR(10) REFERENCES companies(nip),
+          user_nip VARCHAR(20) REFERENCES companies(nip),
           company_name TEXT NOT NULL,
           street TEXT NOT NULL,
           postal_code VARCHAR(10) NOT NULL,
@@ -137,8 +138,8 @@ module.exports = async (req, res) => {
           selected_drums JSONB NOT NULL,
           status VARCHAR(20) DEFAULT 'Pending',
           priority VARCHAR(10) DEFAULT 'Normal',
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ DEFAULT NOW()
         )
       `;
       results.tablesCreated.push('return_requests');
@@ -153,10 +154,10 @@ module.exports = async (req, res) => {
       await sql`
         CREATE TABLE IF NOT EXISTS custom_return_periods (
           id SERIAL PRIMARY KEY,
-          nip VARCHAR(10) UNIQUE REFERENCES companies(nip),
+          nip VARCHAR(20) UNIQUE REFERENCES companies(nip),
           return_period_days INTEGER NOT NULL DEFAULT 85,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ DEFAULT NOW()
         )
       `;
       results.tablesCreated.push('custom_return_periods');
@@ -179,8 +180,8 @@ module.exports = async (req, res) => {
           permissions JSONB,
           password_hash TEXT,
           is_active BOOLEAN DEFAULT true,
-          last_login TIMESTAMP,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          last_login TIMESTAMPTZ,
+          created_at TIMESTAMPTZ DEFAULT NOW()
         )
       `;
       results.tablesCreated.push('admin_users');
@@ -277,11 +278,12 @@ module.exports = async (req, res) => {
       console.warn('⚠️ Error during verification:', error.message);
     }
 
-    console.log('🎉 Database setup completed!');
+    console.log('🎉 Supabase database setup completed!');
 
     return res.status(200).json({
       success: true,
-      message: '🎉 Database setup completed successfully!',
+      message: '🎉 Supabase database setup completed successfully!',
+      database: 'Supabase PostgreSQL',
       results: {
         tablesCreated: results.tablesCreated,
         tablesSkipped: results.tablesSkipped,
@@ -292,25 +294,35 @@ module.exports = async (req, res) => {
       verification: verification,
       nextSteps: [
         '1. Check /api/health to verify everything works',
-        '2. Use /api/import-data to import your drums data',
-        '3. Test login with admin accounts',
-        '4. Start using the system!'
+        '2. Use /api/migrate to import your drums data',
+        '3. Test login with admin accounts (NIP: 0000000000 or 1111111111)',
+        '4. Configure RLS policies in Supabase if needed',
+        '5. Start using the system!'
       ],
       testAccounts: [
         { type: 'Admin', nip: '0000000000', note: 'Set password on first login' },
         { type: 'Supervisor', nip: '1111111111', note: 'Set password on first login' }
-      ]
+      ],
+      supabaseInfo: {
+        url: process.env.SUPABASE_URL,
+        pooling: process.env.POSTGRES_URL?.includes('pooler') ? 'enabled' : 'disabled'
+      }
     });
 
   } catch (error) {
-    console.error('❌ Database setup failed:', error);
+    console.error('❌ Supabase database setup failed:', error);
     
     return res.status(500).json({
       success: false,
-      error: 'Database setup failed',
+      error: 'Supabase database setup failed',
       details: error.message,
       timestamp: new Date().toISOString(),
-      suggestion: 'Check database connection and environment variables'
+      suggestion: 'Check Supabase connection and environment variables',
+      environmentCheck: {
+        POSTGRES_URL: !!process.env.POSTGRES_URL,
+        SUPABASE_URL: !!process.env.SUPABASE_URL,
+        SUPABASE_JWT_SECRET: !!process.env.SUPABASE_JWT_SECRET
+      }
     });
   }
 };
