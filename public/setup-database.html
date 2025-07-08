@@ -30,7 +30,7 @@
                 </svg>
             </div>
             <h1 class="text-3xl font-bold text-gray-900 mb-2">Setup Bazy Danych</h1>
-            <p class="text-gray-600">System Zarządzania Bębnami - Grupa Eltron</p>
+            <p class="text-gray-600">System Zarządzania Bębnami - Grupa Eltron (Supabase)</p>
         </div>
 
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
@@ -54,7 +54,7 @@
 
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">🛠️ Automatyczny Setup Bazy Danych</h2>
-            <p class="text-gray-600 mb-4">Automatycznie utwórz wszystkie wymagane tabele i domyślnych administratorów.</p>
+            <p class="text-gray-600 mb-4">Automatycznie utwórz wszystkie wymagane tabele w Supabase i domyślnych administratorów.</p>
             
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                 <div class="flex items-start">
@@ -63,7 +63,7 @@
                     </svg>
                     <div>
                         <h3 class="text-sm font-medium text-yellow-800">Uwaga!</h3>
-                        <p class="text-sm text-yellow-700 mt-1">Ta operacja utworzy tabele i domyślnych administratorów. Istniejące dane nie zostaną nadpisane.</p>
+                        <p class="text-sm text-yellow-700 mt-1">Ta operacja utworzy tabele w Supabase i domyślnych administratorów. Istniejące dane nie zostaną nadpisane.</p>
                     </div>
                 </div>
             </div>
@@ -82,7 +82,7 @@
 
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">📦 Import Danych z mockData.js</h2>
-            <p class="text-gray-600 mb-4">Wklej tutaj zawartość pliku mockData.js żeby zaimportować swoje bębny do bazy danych.</p>
+            <p class="text-gray-600 mb-4">Wklej tutaj zawartość pliku mockData.js żeby zaimportować swoje bębny do Supabase.</p>
             
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -102,8 +102,7 @@ Przykład:
     "NIP": "1234567890",
     "PELNA_NAZWA_KONTRAHENTA": "Firma ABC",
     "DATA_ZWROTU_DO_DOSTAWCY": "2025-12-31",
-    "Data przyjęcia na stan": "2024-01-15",
-    ...
+    "Data przyjęcia na stan": "2024-01-15"
   }
 ]'
                 ></textarea>
@@ -132,7 +131,7 @@ Przykład:
             <p id="progressText" class="text-sm text-gray-600 mt-2">Inicjalizacja...</p>
         </div>
 
-        <div id="resultsSection" class="hidden bg-white rounded-2xl shadow-xl p-6">
+        <div id="resultsSection" class="hidden bg-white rounded-2xl shadow-xl p-6 mb-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">📋 Wyniki Operacji</h3>
             <div id="resultsContent"></div>
         </div>
@@ -162,49 +161,77 @@ Przykład:
         <div class="text-center">
             <a href="/" class="inline-flex items-center px-6 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors duration-200">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
-                Przejdź do Aplikacji
+                <span>Powrót do Aplikacji</span>
             </a>
         </div>
     </div>
 
     <script>
-        // Check database health
+        // Health check function
         async function checkHealth() {
             const healthBtn = document.getElementById('healthBtn');
             const healthStatus = document.getElementById('healthStatus');
-            
+
             healthBtn.disabled = true;
-            healthStatus.innerHTML = '<div class="loading"></div> Sprawdzanie połączenia z bazą danych...';
+            healthStatus.innerHTML = `
+                <div class="flex items-center">
+                    <div class="loading mr-2"></div>
+                    <span class="text-gray-600">Sprawdzanie połączenia z Supabase...</span>
+                </div>
+            `;
 
             try {
                 const response = await fetch('/api/health');
                 const data = await response.json();
-                
-                if (response.ok) {
+
+                if (data.status === 'healthy') {
                     healthStatus.innerHTML = `
-                        <div class="space-y-3">
+                        <div class="space-y-2">
                             <div class="flex items-center">
                                 <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                                <span class="font-medium text-green-700">Status: ${data.status}</span>
+                                <span class="font-medium text-green-700">Połączenie OK - Wszystkie tabele istnieją</span>
                             </div>
                             <div class="text-sm text-gray-600">
-                                <p><strong>Baza danych:</strong> ${data.database?.type || 'PostgreSQL'}</p>
-                                <p><strong>Tabele:</strong> ${data.database?.schema?.existingTables || 0}/${data.database?.schema?.requiredTables || 6} utworzonych</p>
-                                ${data.recommendations ? `<p><strong>Rekomendacje:</strong> ${data.recommendations.join(', ')}</p>` : ''}
+                                <p><strong>Tabele:</strong> ${Object.entries(data.database.tables).map(([k,v]) => `${k}: ${v} rekordów`).join(', ')}</p>
+                            </div>
+                        </div>
+                    `;
+                } else if (data.status === 'degraded') {
+                    healthStatus.innerHTML = `
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
+                                <span class="font-medium text-orange-700">Połączenie OK - Brak niektórych tabel</span>
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                <p><strong>Brakujące tabele:</strong> ${data.database.schema.missingTables.join(', ')}</p>
+                                <p class="text-orange-600 font-medium mt-1">Użyj przycisku "Utwórz Bazę Danych" poniżej</p>
+                            </div>
+                        </div>
+                    `;
+                } else if (data.status === 'warning') {
+                    healthStatus.innerHTML = `
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                                <span class="font-medium text-yellow-700">Tabele istnieją, ale brak danych</span>
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                <p class="text-yellow-600 font-medium">Użyj sekcji "Import Danych" aby dodać bębny</p>
                             </div>
                         </div>
                     `;
                 } else {
                     healthStatus.innerHTML = `
-                        <div class="space-y-3">
+                        <div class="space-y-2">
                             <div class="flex items-center">
                                 <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                                <span class="font-medium text-red-700">Status: ${data.status || 'unhealthy'}</span>
+                                <span class="font-medium text-red-700">Błąd połączenia z bazą danych</span>
                             </div>
-                            <div class="text-sm text-red-600">
-                                <p><strong>Błąd:</strong> ${data.message || data.error}</p>
+                            <div class="text-sm text-gray-600">
+                                <p><strong>Błąd:</strong> ${data.error?.message || data.message}</p>
                                 ${data.suggestion ? `<p><strong>Sugestia:</strong> ${data.suggestion}</p>` : ''}
                             </div>
                         </div>
@@ -222,7 +249,7 @@ Przykład:
             healthBtn.disabled = false;
         }
 
-        // Setup database
+        // Setup database function
         async function setupDatabase() {
             const setupBtn = document.getElementById('setupBtn');
             const progressSection = document.getElementById('progressSection');
@@ -235,9 +262,8 @@ Przykład:
             resultsSection.classList.add('hidden');
 
             try {
-                // Simulate progress
                 progressBar.style.width = '20%';
-                progressText.textContent = 'Łączenie z bazą danych...';
+                progressText.textContent = 'Łączenie z Supabase...';
 
                 const response = await fetch('/api/setup-database', {
                     method: 'POST',
@@ -246,7 +272,7 @@ Przykład:
                 });
 
                 progressBar.style.width = '80%';
-                progressText.textContent = 'Tworzenie tabel...';
+                progressText.textContent = 'Tworzenie tabel w Supabase...';
 
                 const data = await response.json();
 
@@ -266,7 +292,7 @@ Przykład:
                                     <svg class="w-6 h-6 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    <span class="text-green-700 font-medium">Setup zakończony pomyślnie!</span>
+                                    <span class="text-green-700 font-medium">Setup Supabase zakończony pomyślnie!</span>
                                 </div>
                                 <div class="bg-green-50 rounded-lg p-4">
                                     <h4 class="font-medium text-green-900 mb-2">Utworzone tabele:</h4>
@@ -277,17 +303,46 @@ Przykład:
                                 <div class="bg-blue-50 rounded-lg p-4">
                                     <h4 class="font-medium text-blue-900 mb-2">Konta administratorów:</h4>
                                     <ul class="text-sm text-blue-800 space-y-1">
-                                        ${data.admin_accounts?.map(acc => `<li>👤 NIP: ${acc.nip}, Login: ${acc.username}, Hasło: ${acc.password}</li>`).join('') || '<li>Nie utworzono nowych kont (prawdopodobnie już istnieją)</li>'}
+                                        ${data.adminAccounts?.map(acc => `<li>👤 NIP: ${acc.nip}, Username: ${acc.username} (${acc.role})</li>`).join('') || '<li>Nie utworzono nowych kont (prawdopodobnie już istnieją)</li>'}
                                     </ul>
+                                    <p class="text-xs text-blue-600 mt-2">💡 Hasła będą ustawione przy pierwszym logowaniu przez /api/auth/register</p>
                                 </div>
                                 ${data.results.errors.length > 0 ? `
-                                    <div class="bg-yellow-50 rounded-lg p-4">
-                                        <h4 class="font-medium text-yellow-900 mb-2">Ostrzeżenia:</h4>
-                                        <ul class="text-sm text-yellow-800 space-y-1">
-                                            ${data.results.errors.map(error => `<li>⚠️ ${error}</li>`).join('')}
-                                        </ul>
-                                    </div>
+                                <div class="bg-yellow-50 rounded-lg p-4">
+                                    <h4 class="font-medium text-yellow-900 mb-2">Ostrzeżenia:</h4>
+                                    <ul class="text-sm text-yellow-800 space-y-1">
+                                        ${data.results.errors.map(error => `<li>⚠️ ${error}</li>`).join('')}
+                                    </ul>
+                                </div>
                                 ` : ''}
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <h4 class="font-medium text-gray-900 mb-2">Następne kroki:</h4>
+                                    <ol class="text-sm text-gray-700 space-y-1 list-decimal list-inside">
+                                        ${data.nextSteps?.map(step => `<li>${step}</li>`).join('') || '<li>Sprawdź /api/health</li><li>Dodaj dane przez Import Danych</li>'}
+                                    </ol>
+                                </div>
+                            </div>
+                        `;
+                    } else if (data.sqlInstructions) {
+                        resultsContent.innerHTML = `
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <svg class="w-6 h-6 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+                                    </svg>
+                                    <span class="text-yellow-700 font-medium">Wymagany ręczny setup SQL</span>
+                                </div>
+                                <div class="bg-yellow-50 rounded-lg p-4">
+                                    <h4 class="font-medium text-yellow-900 mb-2">Instrukcje:</h4>
+                                    <ol class="text-sm text-yellow-800 space-y-1 list-decimal list-inside">
+                                        ${data.instructions?.map(step => `<li>${step}</li>`).join('')}
+                                    </ol>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <h4 class="font-medium text-gray-900 mb-2">SQL do wykonania:</h4>
+                                    <textarea readonly class="w-full h-64 text-xs font-mono bg-white border rounded p-2">${data.sqlInstructions}</textarea>
+                                    <button onclick="copySQL(\`${data.sqlInstructions.replace(/`/g, '\\`')}\`, this)" class="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm">Kopiuj SQL</button>
+                                </div>
                             </div>
                         `;
                     } else {
@@ -295,88 +350,68 @@ Przykład:
                             <div class="space-y-4">
                                 <div class="flex items-center">
                                     <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                     </svg>
                                     <span class="text-red-700 font-medium">Setup nie powiódł się</span>
                                 </div>
                                 <div class="bg-red-50 rounded-lg p-4">
-                                    <p class="text-sm text-red-800">${data.error || data.message}</p>
-                                    ${data.suggestion ? `<p class="text-sm text-red-600 mt-2"><strong>Sugestia:</strong> ${data.suggestion}</p>` : ''}
+                                    <p class="text-red-800">${data.details || data.error || 'Nieznany błąd'}</p>
                                 </div>
-                                <button onclick="setupDatabase()" class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
-                                    🔄 Spróbuj ponownie
-                                </button>
                             </div>
                         `;
                     }
-
-                    setupBtn.disabled = false;
                 }, 1000);
 
             } catch (error) {
                 progressSection.classList.add('hidden');
                 resultsSection.classList.remove('hidden');
-
-                const resultsContent = document.getElementById('resultsContent');
-                resultsContent.innerHTML = `
-                    <div class="space-y-4">
-                        <div class="flex items-center">
-                            <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
-                            </svg>
-                            <span class="text-red-700 font-medium">Błąd połączenia</span>
-                        </div>
-                        <div class="bg-red-50 rounded-lg p-4">
-                            <p class="text-sm text-red-800">${error.message}</p>
-                        </div>
-                        <button onclick="setupDatabase()" class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
-                            🔄 Spróbuj ponownie
-                        </button>
+                
+                document.getElementById('resultsContent').innerHTML = `
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        <span class="text-red-700 font-medium">Błąd sieci: ${error.message}</span>
                     </div>
                 `;
-
-                setupBtn.disabled = false;
             }
+
+            setupBtn.disabled = false;
         }
 
-        // Import data from mockData.js
+        // Import data function
         async function importData() {
             const importBtn = document.getElementById('importBtn');
+            const mockDataInput = document.getElementById('mockDataInput');
             const progressSection = document.getElementById('progressSection');
             const resultsSection = document.getElementById('resultsSection');
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
-            const mockDataInput = document.getElementById('mockDataInput');
 
-            const rawData = mockDataInput.value.trim();
-            if (!rawData) {
-                alert('❌ Proszę wkleić dane z mockData.js');
+            const inputValue = mockDataInput.value.trim();
+            if (!inputValue) {
+                alert('Proszę wkleić dane JSON przed importem!');
                 return;
             }
 
             let drumsData;
             try {
-                // Try to parse as JSON array directly
-                if (rawData.startsWith('[')) {
-                    drumsData = JSON.parse(rawData);
-                } else {
-                    // Try to extract array from export statement
-                    const match = rawData.match(/export\s+const\s+\w+\s*=\s*(\[[\s\S]*\]);?/);
-                    if (match) {
-                        drumsData = JSON.parse(match[1]);
-                    } else {
-                        throw new Error('Nie można znaleźć tablicy danych');
-                    }
+                let cleanData = inputValue
+                    .replace(/export\s+const\s+\w+\s*=/, '')
+                    .replace(/module\.exports\s*=/, '')
+                    .trim();
+                
+                if (cleanData.endsWith(';')) {
+                    cleanData = cleanData.slice(0, -1);
                 }
 
-                if (!Array.isArray(drumsData) || drumsData.length === 0) {
-                    throw new Error('Dane muszą być niepustą tablicą');
+                drumsData = JSON.parse(cleanData);
+                
+                if (!Array.isArray(drumsData)) {
+                    throw new Error('Dane muszą być tablicą JSON');
                 }
-
-                console.log(`🎯 Parsed ${drumsData.length} drums from input`);
-
             } catch (error) {
-                alert(`❌ Błąd parsowania danych: ${error.message}\n\nUpewnij się, że wkleiłeś poprawną tablicę JSON.`);
+                alert('Błąd parsowania JSON: ' + error.message);
                 return;
             }
 
@@ -385,12 +420,22 @@ Przykład:
             resultsSection.classList.add('hidden');
 
             try {
-                progressBar.style.width = '30%';
+                progressBar.style.width = '20%';
                 progressText.textContent = 'Przygotowywanie danych...';
 
-                // Tutaj możesz dodać wywołanie API do importu danych
-                // Na razie symulujemy proces
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                const response = await fetch('/api/migrate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        key: 'migrate-eltron-2024',
+                        drumsData: drumsData
+                    })
+                });
+
+                progressBar.style.width = '80%';
+                progressText.textContent = 'Importowanie do Supabase...';
+
+                const data = await response.json();
 
                 progressBar.style.width = '100%';
                 progressText.textContent = 'Import zakończony!';
@@ -400,53 +445,92 @@ Przykład:
                     resultsSection.classList.remove('hidden');
 
                     const resultsContent = document.getElementById('resultsContent');
-                    resultsContent.innerHTML = `
-                        <div class="space-y-4">
-                            <div class="flex items-center">
-                                <svg class="w-6 h-6 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <span class="text-green-700 font-medium">Dane zaimportowane pomyślnie!</span>
+                    
+                    if (response.ok && data.success) {
+                        resultsContent.innerHTML = `
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <svg class="w-6 h-6 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="text-green-700 font-medium">Import zakończony pomyślnie!</span>
+                                </div>
+                                <div class="bg-green-50 rounded-lg p-4">
+                                    <h4 class="font-medium text-green-900 mb-2">Statystyki importu:</h4>
+                                    <ul class="text-sm text-green-800 space-y-1">
+                                        <li>📊 Przetworzono: ${data.stats.totalDrumsProcessed} bębnów</li>
+                                        <li>✅ Zaimportowano: ${data.stats.uniqueDrumsImported} bębnów</li>
+                                        <li>🏢 Utworzono: ${data.stats.companiesCreated} firm</li>
+                                        <li>👤 Konta klientów: ${data.stats.clientAccountsCreated}</li>
+                                        ${data.stats.errors.length > 0 ? `<li>⚠️ Błędów: ${data.stats.errors.length}</li>` : ''}
+                                    </ul>
+                                </div>
+                                ${data.testAccounts ? `
+                                <div class="bg-blue-50 rounded-lg p-4">
+                                    <h4 class="font-medium text-blue-900 mb-2">Przykładowe konta testowe:</h4>
+                                    <ul class="text-sm text-blue-800 space-y-1">
+                                        ${data.testAccounts.slice(0, 5).map(acc => `<li>🔑 ${acc.type}: NIP ${acc.nip} ${acc.company ? '- ' + acc.company : ''}</li>`).join('')}
+                                    </ul>
+                                    <p class="text-xs text-blue-600 mt-2">💡 Hasła będą ustawione przy pierwszym logowaniu</p>
+                                </div>
+                                ` : ''}
                             </div>
-                            <div class="bg-green-50 rounded-lg p-4">
-                                <p class="text-sm text-green-800">Zaimportowano ${drumsData.length} rekordów bębnów.</p>
-                                <p class="text-sm text-green-600 mt-2">Możesz teraz przejść do aplikacji i sprawdzić zaimportowane dane.</p>
+                        `;
+                    } else {
+                        resultsContent.innerHTML = `
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                    <span class="text-red-700 font-medium">Import nie powiódł się</span>
+                                </div>
+                                <div class="bg-red-50 rounded-lg p-4">
+                                    <p class="text-red-800">${data.details || data.error || 'Nieznany błąd'}</p>
+                                </div>
                             </div>
-                        </div>
-                    `;
-
-                    importBtn.disabled = false;
+                        `;
+                    }
                 }, 1000);
 
             } catch (error) {
                 progressSection.classList.add('hidden');
                 resultsSection.classList.remove('hidden');
-
-                const resultsContent = document.getElementById('resultsContent');
-                resultsContent.innerHTML = `
-                    <div class="space-y-4">
-                        <div class="flex items-center">
-                            <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
-                            </svg>
-                            <span class="text-red-700 font-medium">Import nie powiódł się</span>
-                        </div>
-                        <div class="bg-red-50 rounded-lg p-4">
-                            <p class="text-sm text-red-800">${error.message}</p>
-                        </div>
-                        <button onclick="importData()" class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
-                            🔄 Spróbuj ponownie
-                        </button>
+                
+                document.getElementById('resultsContent').innerHTML = `
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        <span class="text-red-700 font-medium">Błąd sieci: ${error.message}</span>
                     </div>
                 `;
-
-                importBtn.disabled = false;
             }
+
+            importBtn.disabled = false;
+        }
+
+        // Helper function to copy SQL
+        function copySQL(sql, button) {
+            navigator.clipboard.writeText(sql).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Skopiowano!';
+                button.classList.remove('bg-blue-500');
+                button.classList.add('bg-green-500');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('bg-green-500');
+                    button.classList.add('bg-blue-500');
+                }, 2000);
+            }).catch(err => {
+                alert('Nie udało się skopiować: ' + err);
+            });
         }
 
         // Auto-check health on page load
-        window.addEventListener('load', function() {
-            setTimeout(checkHealth, 1000);
+        window.addEventListener('load', () => {
+            setTimeout(checkHealth, 500);
         });
     </script>
 </body>
