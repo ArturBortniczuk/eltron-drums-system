@@ -2,7 +2,6 @@
   "name": "eltron-drums-system",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "description": "System zarządzania bębnami dla Grupy Eltron",
   "author": {
     "name": "Grupa Eltron",
