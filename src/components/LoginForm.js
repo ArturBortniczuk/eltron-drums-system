@@ -1,6 +1,7 @@
-// src/components/LoginForm.js - ZOPTYMALIZOWANA WERSJA z aktualną logiką
+// src/components/LoginForm.js - ZOPTYMALIZOWANA WERSJA z przełącznikiem
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Building2, Shield, CheckCircle, ArrowRight, UserCheck, Wifi, WifiOff } from 'lucide-react';
+import { authAPI, handleAPIError, connectionHelpers } from '../utils/api';
 
 const LoginForm = ({ onLogin }) => {
   const [nip, setNip] = useState('');
@@ -12,10 +13,10 @@ const LoginForm = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [loginMode, setLoginMode] = useState('client'); // 'client' or 'admin'
-  const [isOnline, setIsOnline] = useState(true); // Assume online for now
+  const [isOnline, setIsOnline] = useState(connectionHelpers ? connectionHelpers.isOnline() : true);
   const [companyFound, setCompanyFound] = useState(null);
 
-  // Mock data for testing - replace with your actual data
+  // Mock data for testing when API is not available
   const mockCompanies = {
     '8513255117': 'AS ELECTRIC SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ',
     '6792693162': 'PRZEDSIĘBIORSTWO NAPRAW I UTRZYMANIA INFRASTRUKTURY KOLEJOWEJ W KRAKOWIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ',
@@ -39,7 +40,7 @@ const LoginForm = ({ onLogin }) => {
     };
   }, []);
 
-  // Check if this is first login
+  // Check if this is first login (for mock data fallback)
   const checkFirstLogin = (nip) => {
     const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '{}');
     return !registeredUsers[nip];
@@ -65,29 +66,70 @@ const LoginForm = ({ onLogin }) => {
     setLoading(true);
     setError('');
     
-    // Simulate API call delay
-    setTimeout(() => {
+    try {
+      // Try to check NIP first if authAPI is available
+      if (authAPI && authAPI.checkNip) {
+        const response = await authAPI.checkNip(nip, loginMode);
+        
+        if (response.exists) {
+          setIsFirstLogin(response.firstLogin || false);
+          setCompanyFound({ name: response.company?.name || 'Użytkownik znaleziony' });
+        } else {
+          if (loginMode === 'admin') {
+            setError('Nie znaleziono konta administratora dla podanego NIP');
+          } else {
+            setError('Nie znaleziono konta dla podanego NIP. Sprawdź czy numer jest prawidłowy.');
+          }
+        }
+      } else {
+        // Fallback to mock data
+        if (mockCompanies[nip]) {
+          const isFirst = checkFirstLogin(nip);
+          setIsFirstLogin(isFirst);
+          setCompanyFound({ name: mockCompanies[nip] });
+        } else {
+          if (loginMode === 'admin') {
+            setError('Nie znaleziono konta administratora dla podanego NIP');
+          } else {
+            setError('Nie znaleziono konta dla podanego NIP. Sprawdź czy numer jest prawidłowy.');
+          }
+        }
+      }
+    } catch (error) {
+      // Handle API errors and fallback to mock data
+      console.warn('API check failed, using mock data:', error.message);
+      
       if (mockCompanies[nip]) {
         const isFirst = checkFirstLogin(nip);
         setIsFirstLogin(isFirst);
         setCompanyFound({ name: mockCompanies[nip] });
       } else {
-        if (loginMode === 'admin') {
-          setError('Nie znaleziono konta administratora dla podanego NIP');
+        const errorMessage = handleAPIError ? handleAPIError(error, setError) : error.message;
+        
+        if (errorMessage.includes('not found')) {
+          if (loginMode === 'admin') {
+            setError('Nie znaleziono konta administratora dla podanego NIP');
+          } else {
+            setError('Nie znaleziono konta dla podanego NIP. Sprawdź czy numer jest prawidłowy.');
+          }
+        } else if (!isOnline) {
+          setError('Brak połączenia z internetem. Sprawdź połączenie i spróbuj ponownie.');
         } else {
-          setError('Nie znaleziono konta dla podanego NIP. Sprawdź czy numer jest prawidłowy.');
+          setError('Wystąpił błąd podczas sprawdzania konta');
         }
       }
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handlePasswordSubmit = async () => {
     setLoading(true);
     setError('');
 
-    // Simulate processing delay
-    setTimeout(() => {
+    try {
+      let response;
+
       if (isFirstLogin) {
         // Validate new password
         if (newPassword !== confirmPassword) {
@@ -101,19 +143,25 @@ const LoginForm = ({ onLogin }) => {
           return;
         }
         
-        // Save password and login
-        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '{}');
-        registeredUsers[nip] = newPassword;
-        localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
-        
-        const user = {
-          nip,
-          role: loginMode,
-          companyName: companyFound.name,
-          fullName: companyFound.name
-        };
-        
-        onLogin(user);
+        // Register new password
+        if (authAPI && authAPI.register) {
+          response = await authAPI.register(nip, newPassword, confirmPassword, loginMode);
+        } else {
+          // Fallback mock registration
+          const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '{}');
+          registeredUsers[nip] = newPassword;
+          localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+          
+          response = {
+            success: true,
+            user: {
+              nip,
+              role: loginMode,
+              companyName: companyFound.name,
+              fullName: companyFound.name
+            }
+          };
+        }
       } else {
         // Login with existing password
         if (!password) {
@@ -122,21 +170,52 @@ const LoginForm = ({ onLogin }) => {
           return;
         }
         
-        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '{}');
-        if (registeredUsers[nip] === password) {
-          const user = {
-            nip,
-            role: loginMode,
-            companyName: companyFound.name,
-            fullName: companyFound.name
-          };
-          onLogin(user);
+        if (authAPI && authAPI.login) {
+          response = await authAPI.login(nip, password, loginMode);
         } else {
-          setError('Nieprawidłowe hasło. Spróbuj ponownie.');
-          setLoading(false);
+          // Fallback mock login
+          const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '{}');
+          if (registeredUsers[nip] === password) {
+            response = {
+              success: true,
+              user: {
+                nip,
+                role: loginMode,
+                companyName: companyFound.name,
+                fullName: companyFound.name
+              }
+            };
+          } else {
+            throw new Error('Invalid password');
+          }
         }
       }
-    }, 1000);
+
+      // Login successful
+      if (response && response.success && response.user) {
+        onLogin(response.user);
+      } else {
+        setError('Nieoczekiwana odpowiedź serwera');
+      }
+      
+    } catch (error) {
+      const errorMessage = handleAPIError ? handleAPIError(error, setError) : error.message;
+      
+      // Provide specific error messages
+      if (errorMessage.includes('Invalid password') || errorMessage.includes('password')) {
+        setError('Nieprawidłowe hasło. Spróbuj ponownie.');
+      } else if (errorMessage.includes('Passwords do not match')) {
+        setError('Hasła nie są identyczne');
+      } else if (errorMessage.includes('Password must be')) {
+        setError('Hasło musi mieć minimum 6 znaków');
+      } else if (!isOnline) {
+        setError('Brak połączenia z internetem. Sprawdź połączenie i spróbuj ponownie.');
+      } else {
+        setError('Wystąpił błąd podczas logowania');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const resetForm = () => {
