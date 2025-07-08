@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, Package, Calendar, Building2, LogOut, Search, Filter, Plus, FileText, Bell, Settings, Home, Users, BarChart3, MapPin, Clock, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Package, Calendar, LogOut, Search, Filter, FileText, Home, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
 
 const App = () => {
   const [currentView, setCurrentView] = useState('login');
