@@ -10,7 +10,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL_NON_POOLING, // Użyj nowego connection stringa
+  connectionString: process.env.POSTGRES_URL, // Używamy głównego URL
   ssl: {
     rejectUnauthorized: false,
   },
