@@ -4,13 +4,13 @@ const bcrypt = require('bcryptjs');
 const { companies, drums } = require('./src/data/mockData');
 const { adminUsers, clientUsers, returnPeriods } = require('./src/data/additionalData');
 
-// Upewnij się, że zmienna środowiskowa jest ładowana
+// Upewnij się, że zmienne środowiskowe są ładowane
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.POSTGRES_URL_NON_POOLING, // Użyj nowego connection stringa
   ssl: {
     rejectUnauthorized: false,
   },
