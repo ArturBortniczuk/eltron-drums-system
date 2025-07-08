@@ -1,7 +1,6 @@
-// src/components/LoginForm.js - ZAKTUALIZOWANY DLA SUPABASE
+// src/components/LoginForm.js - ZOPTYMALIZOWANA WERSJA z aktualną logiką
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Building2, Shield, CheckCircle, ArrowRight, UserCheck, Wifi, WifiOff } from 'lucide-react';
-import { authAPI, handleAPIError, connectionHelpers } from '../utils/api';
 
 const LoginForm = ({ onLogin }) => {
   const [nip, setNip] = useState('');
@@ -13,8 +12,18 @@ const LoginForm = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [loginMode, setLoginMode] = useState('client'); // 'client' or 'admin'
-  const [isOnline, setIsOnline] = useState(connectionHelpers.isOnline());
+  const [isOnline, setIsOnline] = useState(true); // Assume online for now
   const [companyFound, setCompanyFound] = useState(null);
+
+  // Mock data for testing - replace with your actual data
+  const mockCompanies = {
+    '8513255117': 'AS ELECTRIC SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ',
+    '6792693162': 'PRZEDSIĘBIORSTWO NAPRAW I UTRZYMANIA INFRASTRUKTURY KOLEJOWEJ W KRAKOWIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ',
+    '5260001336': 'BUDIMEX S.A.',
+    '9571010955': 'MOSTOSTAL WARSZAWA S.A.',
+    '0000000000': 'Administrator Systemu',
+    '1111111111': 'Supervisor'
+  };
 
   // Monitor connection status
   useEffect(() => {
@@ -29,6 +38,12 @@ const LoginForm = ({ onLogin }) => {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Check if this is first login
+  const checkFirstLogin = (nip) => {
+    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '{}');
+    return !registeredUsers[nip];
+  };
 
   // Check if user exists when NIP is entered
   const handleNipSubmit = async () => {
@@ -50,50 +65,29 @@ const LoginForm = ({ onLogin }) => {
     setLoading(true);
     setError('');
     
-    try {
-      // Try to login with empty password to check user status
-      const response = await authAPI.login(nip, '', loginMode);
-      
-      if (response.firstLogin) {
-        setIsFirstLogin(true);
-        setCompanyFound(response.user || { name: 'Administrator' });
-      } else if (response.success) {
-        // User logged in successfully (shouldn't happen with empty password)
-        onLogin(response.user);
-        return;
-      }
-      
-    } catch (error) {
-      // If login fails, check the error message to determine user status
-      const errorMessage = error.message.toLowerCase();
-      
-      if (errorMessage.includes('password') || errorMessage.includes('invalid password')) {
-        // User exists but needs proper password
-        setIsFirstLogin(false);
-        setCompanyFound({ name: loginMode === 'admin' ? 'Administrator' : 'Użytkownik znaleziony' });
-      } else if (errorMessage.includes('not found')) {
+    // Simulate API call delay
+    setTimeout(() => {
+      if (mockCompanies[nip]) {
+        const isFirst = checkFirstLogin(nip);
+        setIsFirstLogin(isFirst);
+        setCompanyFound({ name: mockCompanies[nip] });
+      } else {
         if (loginMode === 'admin') {
           setError('Nie znaleziono konta administratora dla podanego NIP');
         } else {
           setError('Nie znaleziono konta dla podanego NIP. Sprawdź czy numer jest prawidłowy.');
         }
-      } else if (!isOnline) {
-        setError('Brak połączenia z internetem. Sprawdź połączenie i spróbuj ponownie.');
-      } else {
-        setError('Wystąpił błąd podczas sprawdzania konta: ' + error.message);
       }
-    } finally {
       setLoading(false);
-    }
+    }, 1000);
   };
 
   const handlePasswordSubmit = async () => {
     setLoading(true);
     setError('');
 
-    try {
-      let response;
-
+    // Simulate processing delay
+    setTimeout(() => {
       if (isFirstLogin) {
         // Validate new password
         if (newPassword !== confirmPassword) {
@@ -107,8 +101,19 @@ const LoginForm = ({ onLogin }) => {
           return;
         }
         
-        // Register new password
-        response = await authAPI.register(nip, newPassword, confirmPassword, loginMode);
+        // Save password and login
+        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '{}');
+        registeredUsers[nip] = newPassword;
+        localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+        
+        const user = {
+          nip,
+          role: loginMode,
+          companyName: companyFound.name,
+          fullName: companyFound.name
+        };
+        
+        onLogin(user);
       } else {
         // Login with existing password
         if (!password) {
@@ -117,32 +122,21 @@ const LoginForm = ({ onLogin }) => {
           return;
         }
         
-        response = await authAPI.login(nip, password, loginMode);
+        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '{}');
+        if (registeredUsers[nip] === password) {
+          const user = {
+            nip,
+            role: loginMode,
+            companyName: companyFound.name,
+            fullName: companyFound.name
+          };
+          onLogin(user);
+        } else {
+          setError('Nieprawidłowe hasło. Spróbuj ponownie.');
+          setLoading(false);
+        }
       }
-
-      // Login successful
-      if (response.success && response.user) {
-        onLogin(response.user);
-      } else {
-        setError('Nieoczekiwana odpowiedź serwera');
-      }
-      
-    } catch (error) {
-      const errorMessage = handleAPIError(error, setError);
-      
-      // Provide specific error messages
-      if (errorMessage.includes('Invalid password') || errorMessage.includes('password')) {
-        setError('Nieprawidłowe hasło. Spróbuj ponownie.');
-      } else if (errorMessage.includes('Passwords do not match')) {
-        setError('Hasła nie są identyczne');
-      } else if (errorMessage.includes('Password must be')) {
-        setError('Hasło musi mieć minimum 6 znaków');
-      } else if (!isOnline) {
-        setError('Brak połączenia z internetem. Sprawdź połączenie i spróbuj ponownie.');
-      }
-    } finally {
-      setLoading(false);
-    }
+    }, 1000);
   };
 
   const resetForm = () => {
@@ -309,15 +303,15 @@ const LoginForm = ({ onLogin }) => {
                 {/* Quick Login Hints */}
                 {loginMode === 'admin' && (
                   <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                    <p className="text-xs text-purple-700 mb-1">💡 Dane testowe administratora (Supabase):</p>
+                    <p className="text-xs text-purple-700 mb-1">💡 Dane testowe administratora:</p>
                     <p className="text-xs text-purple-600">NIP: <strong>0000000000</strong> (admin) lub <strong>1111111111</strong> (supervisor)</p>
                   </div>
                 )}
 
                 {loginMode === 'client' && (
                   <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-xs text-blue-700 mb-1">💡 Przykładowe NIP-y klientów (Supabase):</p>
-                    <p className="text-xs text-blue-600"><strong>8513255117</strong>, <strong>6792693162</strong>, <strong>1234567890</strong></p>
+                    <p className="text-xs text-blue-700 mb-1">💡 Przykładowe NIP-y klientów:</p>
+                    <p className="text-xs text-blue-600"><strong>8513255117</strong>, <strong>6792693162</strong>, <strong>5260001336</strong></p>
                   </div>
                 )}
 
@@ -360,7 +354,7 @@ const LoginForm = ({ onLogin }) => {
                       🎉 Pierwsze logowanie!
                     </h3>
                     <p className="text-sm text-gray-600">
-                      Ustaw bezpieczne hasło dla swojego konta w Supabase
+                      Ustaw bezpieczne hasło dla swojego konta
                     </p>
                     {companyFound.name && (
                       <p className="text-xs text-gray-500 mt-1">
@@ -525,9 +519,7 @@ const LoginForm = ({ onLogin }) => {
         {/* Footer */}
         <div className="text-center text-sm text-gray-500">
           <p>© 2025 Grupa Eltron. Wszystkie prawa zastrzeżone.</p>
-          <p className="text-xs mt-1">
-            Wersja: 2.0.0 | Baza danych: Supabase | Status API: {isOnline ? 'Połączono' : 'Rozłączono'}
-          </p>
+          <p className="text-xs mt-1">Wersja: 1.0.0 | Status API: {isOnline ? 'Połączono' : 'Rozłączono'}</p>
         </div>
       </div>
     </div>
