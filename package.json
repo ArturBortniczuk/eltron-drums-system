@@ -2,6 +2,7 @@
   "name": "eltron-drums-system",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "System zarządzania bębnami dla Grupy Eltron",
   "author": {
     "name": "Grupa Eltron",
@@ -19,7 +20,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "migrate": "node migrate.js",
-    "dev": "react-scripts start"
+    "dev": "react-scripts start",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
