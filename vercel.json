@@ -1,27 +1,23 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "build/static/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "build/index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
-    }
-  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
     {
+      "src": "/setup-database.html",
+      "dest": "/setup-database.html"
+    },
+    {
       "src": "/static/(.*)",
       "dest": "/build/static/$1"
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))",
+      "dest": "/build/$1"
     },
     {
       "src": "/(.*)",
@@ -32,10 +28,5 @@
     "POSTGRES_URL": "@postgres_url",
     "STACK_SECRET_SERVER_KEY": "@stack_secret_server_key",
     "NODE_ENV": "production"
-  },
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
   }
 }
