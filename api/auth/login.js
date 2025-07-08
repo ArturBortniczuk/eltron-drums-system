@@ -1,9 +1,9 @@
-// api/auth/login.js - Endpoint logowania
-import { sql } from '@vercel/postgres';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+// api/auth/login.js - Endpoint logowania (CommonJS)
+const { sql } = require('@vercel/postgres');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -79,11 +79,11 @@ export default async function handler(req, res) {
     }
 
     // Aktualizuj czas ostatniego logowania
-    await sql`
-      UPDATE ${sql(tableName)} 
-      SET last_login = NOW() 
-      WHERE ${sql(loginField)} = ${nip}
-    `;
+    if (role === 'admin') {
+      await sql`UPDATE admin_users SET last_login = NOW() WHERE nip = ${nip}`;
+    } else {
+      await sql`UPDATE users SET last_login = NOW() WHERE nip = ${nip}`;
+    }
 
     // Generuj JWT token
     const tokenPayload = {
@@ -151,4 +151,4 @@ export default async function handler(req, res) {
       details: 'Check server logs for more information'
     });
   }
-}
+};
